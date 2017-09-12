@@ -61,6 +61,7 @@ void CCaptureDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_SEX, m_sex);
 	DDX_Text(pDX, IDC_AGE, m_age);
 	DDX_Text(pDX, IDC_ID, m_ID);
+
 }
 
 
@@ -78,6 +79,7 @@ ON_BN_CLICKED(ID_P2, &CCaptureDlg::OnBnClickedP2)
 ON_BN_CLICKED(IDC_P3, &CCaptureDlg::OnBnClickedP3)
 ON_BN_CLICKED(IDC_P4, &CCaptureDlg::OnBnClickedP4)
 ON_BN_CLICKED(IDC_CONFIRM, &CCaptureDlg::OnBnClickedConfirm)
+ON_BN_CLICKED(IDC_TESTSERV, &CCaptureDlg::OnBnClickedTestserv)
 END_MESSAGE_MAP()
 
 
@@ -786,4 +788,41 @@ void CCaptureDlg::OnBnClickedConfirm()
 			
 	MultiImage_OneWin("T", imgs, cvSize(4, 3), cvSize(160, 120));
 
+}
+
+
+void CCaptureDlg::OnBnClickedTestserv()
+{
+	// TODO:  在此添加控件通知处理程序代码
+
+	///////////////////////////////////////////////////
+	//20170509
+	m_port = "44444";
+//	m_PORT.SetWindowText(m_port);
+	m_ip = "192.168.1.104";
+	DWORD dwIP = ntohl(inet_addr(m_ip));
+
+
+	sID = "100000000001";
+	///////////////////////////////////////////////////
+
+//	m_PORT.GetWindowText(m_port);
+//	m_IP.GetWindowText(m_ip);
+	m_msg = "连接IP: " + m_ip;
+	m_msg.Append("\n端口号: ");
+	m_msg.Append(m_port);
+	MessageBox(m_msg);
+
+	if (m_cli.init(m_ip.GetBuffer(), _ttoi(m_port)))
+	{
+		m_msg = "连接成功";
+	//	m_PORT.EnableWindow(FALSE);
+	//	m_IP.EnableWindow(FALSE);
+	//	mb_conn.EnableWindow(FALSE);
+	}
+	else
+	{
+		m_msg = "连接失败\n请确认IP或端口号";
+	}
+	MessageBox(m_msg);
 }

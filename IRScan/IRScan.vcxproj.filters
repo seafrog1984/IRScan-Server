@@ -13,6 +13,24 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="utils">
+      <UniqueIdentifier>{3e4efaf5-d3a2-42ca-a04b-96ed7b6cc92b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\log">
+      <UniqueIdentifier>{d2711ca3-4928-4bee-8206-f81155893624}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\md5">
+      <UniqueIdentifier>{7d328649-d386-41f1-8bdc-fc1ec65f5a49}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\pc">
+      <UniqueIdentifier>{c2768ffc-5646-4292-a8fc-71ac64789b5a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\string">
+      <UniqueIdentifier>{40b32059-56d4-403d-89b1-3454aee5dec9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\socket">
+      <UniqueIdentifier>{c91342bc-97bd-4c41-8c18-6069ec9d2ec5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -45,6 +63,27 @@
     <ClInclude Include="mscomm1.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="incl\client.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="incl\protocol.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\log\Logger.h">
+      <Filter>utils\log</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\md5\md5.h">
+      <Filter>utils\md5</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\pc\pc_info.h">
+      <Filter>utils\pc</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\socket\Socket.h">
+      <Filter>utils\socket</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\string\string_utils.h">
+      <Filter>utils\string</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IRScan.cpp">
@@ -67,6 +106,24 @@
     </ClCompile>
     <ClCompile Include="mscomm1.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="client.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\log\Logger.cpp">
+      <Filter>utils\log</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\md5\md5.cpp">
+      <Filter>utils\md5</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\pc\pc_info.cpp">
+      <Filter>utils\pc</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\socket\Socket.cpp">
+      <Filter>utils\socket</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\string\string_utils.cpp">
+      <Filter>utils\string</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

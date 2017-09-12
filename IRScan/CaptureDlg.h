@@ -6,6 +6,15 @@
 
 #include "FGInterface.h"
 #include "mscomm1.h"
+
+#include "afxwin.h"
+#include "afxcmn.h"
+
+/////////////////////////////////////////////
+//20170509
+#include "./incl/client.h"
+
+
 using namespace cv;
 
 class CCaptureDlg : public CDialogEx
@@ -37,6 +46,24 @@ public:
     CString m_sTXDATA;
 	CString m_PID;
 
+public://数据库连接
+	/////////////////////////////////////////////
+	//20170912
+	CString m_msg;
+
+	client_t m_cli;
+
+	std::string sID;
+	std::vector<std::string> vecPngIDReq;
+	std::vector<std::string> vecPngIDResp;
+
+	CString m_port;
+	CEdit m_PORT;
+	CString m_ip;
+
+
+	/////////////////////////////////////////////
+
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBnClickedSave();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
@@ -66,4 +93,6 @@ public:
 	void Ori2Mat(unsigned short *tmp,Mat &g_dst);
 	void rot90(Mat g_dst, Mat &tmpimg);
 	void MultiImage_OneWin(const std::string& MultiShow_WinName, const vector<Mat>& SrcImg_V, CvSize SubPlot, CvSize ImgMax_Size );
+	afx_msg void OnBnClickedTestserv();
+
 };

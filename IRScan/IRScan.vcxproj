@@ -56,7 +56,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
@@ -109,6 +109,8 @@
   <ItemGroup>
     <ClInclude Include="CaptureDlg.h" />
     <ClInclude Include="FGInterface.h" />
+    <ClInclude Include="incl\client.h" />
+    <ClInclude Include="incl\protocol.h" />
     <ClInclude Include="IRScan.h" />
     <ClInclude Include="IRScanDlg.h" />
     <ClInclude Include="mscomm1.h" />
@@ -116,9 +118,15 @@
     <ClInclude Include="SettingDlg.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="utils\log\Logger.h" />
+    <ClInclude Include="utils\md5\md5.h" />
+    <ClInclude Include="utils\pc\pc_info.h" />
+    <ClInclude Include="utils\socket\Socket.h" />
+    <ClInclude Include="utils\string\string_utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CaptureDlg.cpp" />
+    <ClCompile Include="client.cpp" />
     <ClCompile Include="FGInterface.cpp" />
     <ClCompile Include="IRScan.cpp" />
     <ClCompile Include="IRScanDlg.cpp" />
@@ -128,6 +136,11 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="utils\log\Logger.cpp" />
+    <ClCompile Include="utils\md5\md5.cpp" />
+    <ClCompile Include="utils\pc\pc_info.cpp" />
+    <ClCompile Include="utils\socket\Socket.cpp" />
+    <ClCompile Include="utils\string\string_utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="IRScan.rc" />

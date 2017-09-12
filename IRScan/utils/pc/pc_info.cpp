@@ -83,7 +83,7 @@ bool getLocalMac2(unsigned char *mac)
             if(pAdapter->AddressLength != 6)
                 continue;
             char acMAC[20] = {0};
-            sprintf(acMAC, "%02X:%02X:%02X:%02X:%02X:%02X",
+            sprintf_s(acMAC, "%02X:%02X:%02X:%02X:%02X:%02X",
                 int (pAdapter->Address[0]),
                 int (pAdapter->Address[1]),
                 int (pAdapter->Address[2]),
@@ -126,7 +126,7 @@ bool getLocalMac3(unsigned char *mac)
             if(pCurrAddresses->PhysicalAddressLength != 6)
                 continue;
             char acMAC[20] = {0};
-            sprintf(acMAC, "%02X:%02X:%02X:%02X:%02X:%02X",
+            sprintf_s(acMAC, "%02X:%02X:%02X:%02X:%02X:%02X",
                 int (pCurrAddresses->PhysicalAddress[0]),
                 int (pCurrAddresses->PhysicalAddress[1]),
                 int (pCurrAddresses->PhysicalAddress[2]),

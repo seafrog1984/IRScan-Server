@@ -40,10 +40,10 @@ bool CLogger::SetFileName(const char* FileName) {
 		return false;
 
 	*(++mid) = '\0';
-	strcpy(m_FileName, file);
-	strcpy(m_FileName, FileName);
+	strcpy_s(m_FileName, file);
+	strcpy_s(m_FileName, FileName);
 
-	m_File = fopen(m_FileName, "ab");
+	fopen_s(&m_File,m_FileName, "ab");
 	if (m_File == NULL)
 		return false;
 
@@ -59,7 +59,7 @@ void CLogger::SetSourceFileName(char *filename)
 			break;
 		}
 	}
-	strcpy(m_SourceFile, mid);
+	strcpy_s(m_SourceFile, mid);
 }
 
 void CLogger::SetLogLevel(CLoggerLevels LogLevel)
@@ -76,7 +76,8 @@ void CLogger::LogNow(TCHAR *LoglevelName, TCHAR *LogString)
 
 	time_t now;
 	time(&now);
-	struct tm *tmnow = localtime(&now);
+	struct tm *tmnow=new struct tm;
+	localtime_s(tmnow,&now);
 	char strnow[25] = {0x0,};
 	strftime(strnow, 24, "%Y-%m-%d %H:%M:%S", tmnow);
 
@@ -131,7 +132,7 @@ void CLogger::LogInfo(TCHAR *format, ...)
 		TCHAR mid[MAX_LOG_BUF] = {0}; 
 		va_list args;
 		va_start(args, format);
-		vsprintf(mid, format, args);
+		vsprintf_s(mid, format, args);
 		ReplaceCRLF(mid);
 		LogNow(("[INFO]"), mid);
 		va_end(args);
@@ -150,7 +151,7 @@ void CLogger::LogError(const char* format, ...)
 		char mid[MAX_LOG_BUF] = {0}; 
 		va_list args;
 		va_start(args, format);
-		vsprintf(mid, format, args);
+		vsprintf_s(mid, format, args);
 		ReplaceCRLF(mid);
 		LogNow(("[ERROR]"), mid);
 		va_end(args);
@@ -167,7 +168,7 @@ void CLogger::LogDevInfo(TCHAR *format, ...)
 		TCHAR mid[MAX_LOG_BUF] = {0}; 
 		va_list args;
 		va_start(args, format);
-		vsprintf(mid, format, args);
+		vsprintf_s(mid, format, args);
 		ReplaceCRLF(mid);
 		LogNow(("[DEVINFO]"), mid);
 		va_end(args);
@@ -182,7 +183,7 @@ void CLogger::LogAll(TCHAR *format, ...)
 	TCHAR mid[MAX_LOG_BUF] = {0}; 
 	va_list args;
 	va_start(args, format);
-	vsprintf(mid, format, args);
+	vsprintf_s(mid, format, args);
 	ReplaceCRLF(mid);
 	LogNow(("[*ALL*]"), mid);
 	va_end(args);

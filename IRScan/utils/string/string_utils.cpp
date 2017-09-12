@@ -58,7 +58,7 @@ std::string bytesToHexstring(const char* bytes, int bytelength)
 int split_vec(const char *psALine, std::vector<std::string> &vecItem, const char delimiter)
 {
 	char sInputLine[10240] = {0};
-	strncpy(sInputLine, psALine, sizeof(sInputLine) - 1);
+	strncpy_s(sInputLine, psALine, sizeof(sInputLine) - 1);
 
 	char *pEnd = NULL;
 	char *pHead = sInputLine;
@@ -100,7 +100,7 @@ std::string vec_join(const std::vector<std::string>& from, const char delimiter)
 int split_map(const char *pszALine, std::map<std::string, std::string> &mapItem, char cSeparatorKey, char cSeparatorValue)
 {
 	char szInputLine[10240] = {0};
-	strncpy(szInputLine, pszALine, sizeof(szInputLine) - 1);
+	strncpy_s(szInputLine, pszALine, sizeof(szInputLine) - 1);
 
 	char *pEnd = NULL,*pMid = NULL;
 	char *pHead = szInputLine;
