@@ -799,11 +799,11 @@ void CCaptureDlg::OnBnClickedTestserv()
 	//20170509
 	m_port = "44444";
 //	m_PORT.SetWindowText(m_port);
-	m_ip = "192.168.1.104";
+	m_ip = "119.29.233.186";
 	DWORD dwIP = ntohl(inet_addr(m_ip));
 
 
-	sID = "100000000001";
+	sID = "JN201709141437";
 	///////////////////////////////////////////////////
 
 //	m_PORT.GetWindowText(m_port);
@@ -825,4 +825,157 @@ void CCaptureDlg::OnBnClickedTestserv()
 		m_msg = "连接失败\n请确认IP或端口号";
 	}
 	MessageBox(m_msg);
+
+
+	//授权
+	int iRet = m_cli.login_auth("test", "test@1234", 0);
+	if (0 > iRet)
+	{
+		m_msg = "获取授权码失败\n";
+		m_msg.Append(m_cli.get_msg().c_str());
+		m_cli.close();
+	//	mb_conn.EnableWindow(TRUE);
+	}
+	else
+	{
+		m_msg = "获取授权码成功\n";
+		if (0 == iRet)
+		{
+			m_msg.Append("测试环境");
+		}
+		else
+		{
+			CString sAuth = m_cli.get_auth().c_str();
+			CString sRep1 = sAuth.Mid(8, 16);
+			CString sRep2('*', sRep1.GetLength());
+			sAuth.Replace(sRep1, sRep2);
+			m_msg.Append(sAuth);
+		}
+	}
+	MessageBox(m_msg);
+
+	//发送图片
+
+	vecPngIDReq.clear();
+
+	m_msg = "编号 ";
+	m_msg.Append(sID.c_str());
+	MessageBox(m_msg);
+
+
+
+	unsigned short *tmp = (unsigned short*)malloc(320 * 240 * sizeof(short));
+
+	ifstream fin((LPSTR)(LPCSTR)"a.dat");
+	long width = 320, height = 240;
+
+	for (int i = 0; i < width*height; i++)
+	{
+		fin >> *(tmp + i);
+		if (*(tmp + i) == ' ')
+			i--;
+	}
+	fin.close();
+
+	char sData[8][20] = { "11111", "22222", "33333", "444444", "5555", "66666", "7777", "888888" };
+
+	for (int i = 0; i<8; ++i)
+	{
+		m_msg = "发送图片 ";
+		m_msg.Append(sData[i]);
+		if (!m_cli.send_png(sID, sData[i], strlen(sData[i]), vecPngIDReq))
+		{
+			m_msg.Append(" 失败\n");
+			m_msg.Append(m_cli.get_msg().c_str());
+			MessageBox(m_msg);
+			m_cli.close();
+	//		mb_login.EnableWindow(TRUE);
+			return;
+		}
+		else
+		{
+			m_msg.Append(" 成功");
+		}
+		MessageBox(m_msg);
+	}
+
+	//发送信息
+	if (0 == vecPngIDReq.size())
+	{
+		m_msg = "图片index列表为空\n请先调用「发送图片」接口";
+	}
+	else
+	{
+		std::map<std::string, std::string> mapUserInfo;
+		mapUserInfo["id"] = sID;
+		mapUserInfo["name"] = "张三";
+		mapUserInfo["sex"] = "0";
+		mapUserInfo["age"] = "18";
+		mapUserInfo["identity"] = "337788";
+		mapUserInfo["pic"] = vec_join(vecPngIDReq, ',');
+
+		if (!m_cli.send_info(mapUserInfo))
+		{
+			m_msg = "发送用户信息失败\n";
+			m_msg.Append(m_cli.get_msg().c_str());
+			m_cli.close();
+		//	mb_conn.EnableWindow(TRUE);
+		}
+		else
+		{
+			m_msg = "发送用户信息成功";
+		}
+	}
+	MessageBox(m_msg);
+
+
+	//获取信息
+	std::map<std::string, std::string> mapUserInfoResp;
+	int ret = m_cli.get_info(sID, mapUserInfoResp);
+	if (-1 == ret)
+	{
+		m_msg = "获取用户信息失败\n";
+		m_msg.Append(m_cli.get_msg().c_str());
+		m_cli.close();
+		//mb_conn.EnableWindow(TRUE);
+	}
+	else if (0 == ret)
+	{
+		m_msg = "获取用户信息为空";
+	}
+	else
+	{
+		m_msg = "获取用户信息成功";
+		MessageBox(m_msg);
+		std::map<std::string, std::string>::iterator it = mapUserInfoResp.begin();
+		for (; it != mapUserInfoResp.end(); ++it)
+		{
+			m_msg = "获取 ";
+			m_msg.Append(it->first.c_str());
+			m_msg.Append(_T("\n"));
+			m_msg.Append(it->second.c_str());
+		//	MessageBox(m_msg);
+		}
+
+		it = mapUserInfoResp.begin();
+		CString rectmp;
+			rectmp=it->second.c_str();
+			m_age = atoi(rectmp);
+			UpdateData(FALSE);
+
+	
+
+		if (mapUserInfoResp.end() != mapUserInfoResp.find("pic"))
+		{
+			vecPngIDResp.clear();
+			int size = split_vec(mapUserInfoResp["pic"].c_str(), vecPngIDResp, ',');
+		}
+		return;
+	}
+	MessageBox(m_msg);
+
+
+
+
+
 }

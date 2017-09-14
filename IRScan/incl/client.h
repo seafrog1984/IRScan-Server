@@ -14,14 +14,21 @@
 class _client_t
 {
 public:
-	_client_t(): bConnection(false) {}
+	_client_t() : bConnection(false) {}
 	~_client_t()
+	{
+		close();
+	}
+
+	void close()
 	{
 		if (bConnection)
 			sock.Close();
 
 		bConnection = false;
 	}
+
+	bool get_conn() { return bConnection; }
 
 	std::string get_msg() { return sMsg; }
 
@@ -31,9 +38,9 @@ public:
 	bool init(const std::string &host, short port);
 
 	//获取授权
-	bool login_auth();
-    //验证授权
-	bool check_auth();
+	int login_auth(CString user, CString passwd, int flag = 1);
+	//验证授权
+	int check_auth(int flag = 1);
 	//发送图片
 	bool send_png(const std::string &id, char *data, int len, std::vector<std::string> &vecPngID);
 	//发送个人信息
@@ -45,6 +52,14 @@ public:
 	//发送结果图片
 	bool send_result(const std::string &id, char *data, int len);
 
+	//获取用户列表
+	bool get_users(CString &user, CString &passwd, std::map<std::string, std::string> &mapUserInfo, int &level);
+	//新增用户
+	bool new_user(CString &user, CString &passwd, int &level, int &permissions, CString &loginuser, CString &loginpasswd);
+	//删除用户
+	bool del_user(CString &user, CString &loginuser, CString &loginpasswd);
+	//修改用户
+	bool update_user(CString &user, CString &passwd, int &permissions, CString &loginuser, CString &loginpasswd);
 
 private:
 	void set_req_head(req_head_t &head, const int &cmd);

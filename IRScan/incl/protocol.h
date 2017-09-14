@@ -11,6 +11,11 @@
 #define   REQ_CMD_GET_DATA      6
 #define   REQ_CMD_SEND_RESULT   7
 
+#define   REQ_CONTROL_GET_LIST  8
+#define   REQ_CONTROL_NEW_USER  9
+#define   REQ_CONTROL_DEL_USER  10
+#define   REQ_CONTROL_UPD_USER  11
+
 
 
 #pragma pack(1)
