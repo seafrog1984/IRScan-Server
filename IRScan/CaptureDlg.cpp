@@ -605,22 +605,21 @@ void CCaptureDlg::OnOncommMscomm1()
 	VARIANT variant_inp;
 	COleSafeArray safearray_inp;
 	LONG len, k;
-	BYTE rxdata[2048];
+	BYTE rxdata[2048]; //设置BYTE数组 An 8-bit integerthat is not signed.
 	CString strtemp;
-	if (m_CtrlCom.get_CommEvent() == 2)       //事件值为2表示缓冲区内有字符  
-	{
-		variant_inp = m_CtrlCom.get_Input();  //读缓冲区  
-		safearray_inp = variant_inp;        //VARIANT型变量转换为ColeSafeArray型变量  
-		len = safearray_inp.GetDim();       //得到有效数据长度  
-		for (k = 0; k < len; k++)
+	if (m_CtrlCom.get_CommEvent() == 2) //事件值为2表示接收缓冲区内有字符
+	{              ////////以下你可以根据自己的通信协议加入处理代码
+		variant_inp = m_CtrlCom.get_Input(); //读缓冲区
+		safearray_inp = variant_inp; //VARIANT型变量转换为ColeSafeArray型变量
+		len = safearray_inp.GetOneDimSize(); //得到有效数据长度
+		for (k = 0; k<len; k++)
+			safearray_inp.GetElement(&k, rxdata + k);//转换为BYTE型数组
+		for (k = 0; k<len; k++) //将数组转换为Cstring型变量
 		{
-			safearray_inp.GetElement(&k, rxdata + k);//转换为BYTE型数组  
-		}
-		for (k = 0; k < len; k++)            //将数组转换为CString型变量  
-		{
-			BYTE bt = *(char*)(rxdata + k); //字符型  
-			strtemp.Format(_T("%c"), bt);   //将字符送入临时变量strtemp存放  
-			m_sRXDATA += strtemp;           //接收到的数据放到编辑框对应的变量中  
+			BYTE bt = *(char*)(rxdata + k); //字符型
+			strtemp.Format("%c", bt); //将字符送入临时变量strtemp存放
+			m_sRXDATA += strtemp; //加入接收编辑框对应字符串 
+			UpdateData(FALSE);
 		}
 	}
 	SetDlgItemText(IDC_EDIT_RXDATA, m_sRXDATA);
