@@ -176,10 +176,12 @@ BOOL CCaptureDlg::OnInitDialog()
 	{
 		m_CtrlCom.put_PortOpen(FALSE);
 	}
-	m_CtrlCom.put_CommPort(3);                //选择com3，可以根据具体情况更改  
+//	m_CtrlCom.put_CommPort(3);                //选择com3，可以根据具体情况更改  
+	m_CtrlCom.put_CommPort(4);                //读卡com4  
 	m_CtrlCom.put_InBufferSize(1024);         //设置输入缓冲区的大小，Bytes  
 	m_CtrlCom.put_OutBufferSize(1024);        //设置输出缓冲区的大小，Bytes  
-	m_CtrlCom.put_Settings(_T("9600,n,8,1")); //波特率9600，无校验，8个数据位，停止位1  
+//	m_CtrlCom.put_Settings(_T("9600,n,8,1")); //波特率9600，无校验，8个数据位，停止位1  
+	m_CtrlCom.put_Settings(_T("57600,n,8,1")); //读卡波特率57600，无校验，8个数据位，停止位1  
 	m_CtrlCom.put_InputMode(1);               //1:表示以二进制方式检索数据  
 	m_CtrlCom.put_RThreshold(1);              //参数1表示每当串口接收缓冲区中有多于或等于1个字符时将引发一个接收数据的OnComm事件  
 	m_CtrlCom.put_InputLen(0);                //设置当前接收区长度是0  
