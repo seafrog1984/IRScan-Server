@@ -643,7 +643,36 @@ void CCaptureDlg::OnTimer(UINT_PTR nIDEvent)
 	//		pyrDown(tempImage, g_dstImage4, Size(tempImage.cols / 2, tempImage.rows / 2));
 
 	//		imshow("【效果图二resize放大】", g_dstImage2);
+
+			int thickness = 2;
+			int lineType = 8;
+			line(g_dstImage3, Point(g_dstImage3.cols / 2, 0),
+				Point(g_dstImage3.cols / 2, g_dstImage3.rows - 1),
+				Scalar(255, 255, 255),
+				thickness,
+				lineType);
+			int step = g_dstImage3.rows / 4;
+
+			for (int i = 0; i<4; i++)
+			{
+				line(g_dstImage3,
+					Point(g_dstImage3.cols / 2, 0 + i*step),
+					Point(0, g_dstImage3.cols / 2 * 1.73 + i*step),
+					Scalar(255, 255, 255),
+					thickness,
+					lineType);
+
+				line(g_dstImage3,
+					Point(g_dstImage3.cols / 2, 0 + i*step),
+					Point(g_dstImage3.cols - 1, g_dstImage3.cols / 2 * 1.73 + i*step),
+					Scalar(255, 255, 255),
+					thickness,
+					lineType);
+			}
+
+
 			imshow("view", g_dstImage3);
+
 			int Scree_W = GetSystemMetrics(SM_CXSCREEN);
 			int Scree_H = GetSystemMetrics(SM_CYSCREEN);
 
