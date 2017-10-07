@@ -53,9 +53,9 @@ public://数据库连接
 
 	client_t m_cli;
 
-	std::string sID;
-	std::vector<std::string> vecPngIDReq;
-	std::vector<std::string> vecPngIDResp;
+	string sID;
+	vector<std::string> vecPngIDReq;
+	vector<std::string> vecPngIDResp;
 
 	CString m_port;
 	CEdit m_PORT;
@@ -95,4 +95,6 @@ public://数据库连接
 	void MultiImage_OneWin(const std::string& MultiShow_WinName, const vector<Mat>& SrcImg_V, CvSize SubPlot, CvSize ImgMax_Size );
 	afx_msg void OnBnClickedTestserv();
 
+	CMscomm1 m_CtrlCard;
+	void OnCommMscomm2();
 };

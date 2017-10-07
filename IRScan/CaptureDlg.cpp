@@ -62,6 +62,7 @@ void CCaptureDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_AGE, m_age);
 	DDX_Text(pDX, IDC_ID, m_ID);
 
+	DDX_Control(pDX, IDC_MSCOMM2, m_CtrlCard);
 }
 
 
@@ -171,29 +172,106 @@ BOOL CCaptureDlg::OnInitDialog()
 	::SetParent(hWnd, GetDlgItem(IDC_PIC)->m_hWnd);
 	::ShowWindow(hParent, SW_HIDE);*/
 	
+	//控制串口初始化
+	//if (m_CtrlCom.get_PortOpen())
+	//{
+	//	m_CtrlCom.put_PortOpen(FALSE);
+	//}
+	//m_CtrlCom.put_CommPort(3);                //选择com3，可以根据具体情况更改  
+	//m_CtrlCom.put_InBufferSize(1024);         //设置输入缓冲区的大小，Bytes  
+	//m_CtrlCom.put_OutBufferSize(1024);        //设置输出缓冲区的大小，Bytes  
+	//m_CtrlCom.put_Settings(_T("9600,n,8,1")); //波特率9600，无校验，8个数据位，停止位1  
+	//m_CtrlCom.put_InputMode(1);               //1:表示以二进制方式检索数据  
+	//m_CtrlCom.put_RThreshold(1);              //参数1表示每当串口接收缓冲区中有多于或等于1个字符时将引发一个接收数据的OnComm事件  
+	//m_CtrlCom.put_InputLen(0);                //设置当前接收区长度是0  
+	//if (!m_CtrlCom.get_PortOpen())
+	//{
+	//	m_CtrlCom.put_PortOpen(TRUE);
+	//}
+	//else
+	//{
+	//	AfxMessageBox(_T("Can not open serial port!"));
+	//}
+	//m_CtrlCom.get_Input();                    //先预读缓冲区以清除残留数据  
 
-	if (m_CtrlCom.get_PortOpen())
+
+	//读卡串口初始化
+	if (m_CtrlCard.get_PortOpen())
 	{
-		m_CtrlCom.put_PortOpen(FALSE);
+		m_CtrlCard.put_PortOpen(FALSE);
 	}
-//	m_CtrlCom.put_CommPort(3);                //选择com3，可以根据具体情况更改  
-	m_CtrlCom.put_CommPort(4);                //读卡com4  
-	m_CtrlCom.put_InBufferSize(1024);         //设置输入缓冲区的大小，Bytes  
-	m_CtrlCom.put_OutBufferSize(1024);        //设置输出缓冲区的大小，Bytes  
-//	m_CtrlCom.put_Settings(_T("9600,n,8,1")); //波特率9600，无校验，8个数据位，停止位1  
-	m_CtrlCom.put_Settings(_T("57600,n,8,1")); //读卡波特率57600，无校验，8个数据位，停止位1  
-	m_CtrlCom.put_InputMode(1);               //1:表示以二进制方式检索数据  
-	m_CtrlCom.put_RThreshold(1);              //参数1表示每当串口接收缓冲区中有多于或等于1个字符时将引发一个接收数据的OnComm事件  
-	m_CtrlCom.put_InputLen(0);                //设置当前接收区长度是0  
-	if (!m_CtrlCom.get_PortOpen())
+	m_CtrlCard.put_CommPort(4);                //读卡com4  
+	m_CtrlCard.put_InBufferSize(1024);         //设置输入缓冲区的大小，Bytes  
+	m_CtrlCard.put_OutBufferSize(1024);        //设置输出缓冲区的大小，Bytes  
+	m_CtrlCard.put_Settings(_T("57600,n,8,1")); //读卡波特率57600，无校验，8个数据位，停止位1  
+	m_CtrlCard.put_InputMode(1);               //1:表示以二进制方式检索数据  
+	m_CtrlCard.put_RThreshold(1);              //参数1表示每当串口接收缓冲区中有多于或等于1个字符时将引发一个接收数据的OnComm事件  
+	m_CtrlCard.put_InputLen(0);                //设置当前接收区长度是0  
+	if (!m_CtrlCard.get_PortOpen())
 	{
-		m_CtrlCom.put_PortOpen(TRUE);
+		m_CtrlCard.put_PortOpen(TRUE);
 	}
 	else
 	{
 		AfxMessageBox(_T("Can not open serial port!"));
 	}
-	m_CtrlCom.get_Input();                    //先预读缓冲区以清除残留数据  
+	m_CtrlCard.get_Input();                    //先预读缓冲区以清除残留数据  
+
+	//数据库连接
+	m_port = "44444";
+	//	m_PORT.SetWindowText(m_port);
+	m_ip = "119.29.233.186";
+	DWORD dwIP = ntohl(inet_addr(m_ip));
+	///////////////////////////////////////////////////
+	//	m_PORT.GetWindowText(m_port);
+	//	m_IP.GetWindowText(m_ip);
+	m_msg = "连接IP: " + m_ip;
+	m_msg.Append("\n端口号: ");
+	m_msg.Append(m_port);
+	MessageBox(m_msg);
+
+	if (m_cli.init(m_ip.GetBuffer(), _ttoi(m_port)))
+	{
+		m_msg = "连接成功";
+		//	m_PORT.EnableWindow(FALSE);
+		//	m_IP.EnableWindow(FALSE);
+		//	mb_conn.EnableWindow(FALSE);
+	}
+	else
+	{
+		m_msg = "连接失败\n请确认IP或端口号";
+	}
+	MessageBox(m_msg);
+
+
+	//授权
+	int iRet = m_cli.login_auth("test", "test@1234", 0);
+	if (0 > iRet)
+	{
+		m_msg = "获取授权码失败\n";
+		m_msg.Append(m_cli.get_msg().c_str());
+		m_cli.close();
+		//	mb_conn.EnableWindow(TRUE);
+	}
+	else
+	{
+		m_msg = "获取授权码成功\n";
+		if (0 == iRet)
+		{
+			m_msg.Append("测试环境");
+		}
+		else
+		{
+			CString sAuth = m_cli.get_auth().c_str();
+			CString sRep1 = sAuth.Mid(8, 16);
+			CString sRep2('*', sRep1.GetLength());
+			sAuth.Replace(sRep1, sRep2);
+			m_msg.Append(sAuth);
+		}
+	}
+	MessageBox(m_msg);
+
+
 	UpdateData(FALSE);
 
 
@@ -598,6 +676,7 @@ void CCaptureDlg::OnBnClickedInit()
 //}
 BEGIN_EVENTSINK_MAP(CCaptureDlg, CDialogEx)
 	ON_EVENT(CCaptureDlg, IDC_MSCOMM1, 1, CCaptureDlg::OnOncommMscomm1, VTS_NONE)
+	ON_EVENT(CCaptureDlg, IDC_MSCOMM2, 1, CCaptureDlg::OnCommMscomm2, VTS_NONE)
 END_EVENTSINK_MAP()
 
 
@@ -609,6 +688,7 @@ void CCaptureDlg::OnOncommMscomm1()
 	LONG len, k;
 	BYTE rxdata[2048]; //设置BYTE数组 An 8-bit integerthat is not signed.
 	CString strtemp;
+	m_sRXDATA = "";
 	if (m_CtrlCom.get_CommEvent() == 2) //事件值为2表示接收缓冲区内有字符
 	{              ////////以下你可以根据自己的通信协议加入处理代码
 		variant_inp = m_CtrlCom.get_Input(); //读缓冲区
@@ -620,11 +700,18 @@ void CCaptureDlg::OnOncommMscomm1()
 		{
 			BYTE bt = *(char*)(rxdata + k); //字符型
 			strtemp.Format("%c", bt); //将字符送入临时变量strtemp存放
-			m_sRXDATA += strtemp; //加入接收编辑框对应字符串 
+			if (strtemp != '#'&&strtemp != '*')
+			{
+				m_sRXDATA += strtemp; //加入接收编辑框对应字符串 
+			}
 			UpdateData(FALSE);
 		}
 	}
-	SetDlgItemText(IDC_EDIT_RXDATA, m_sRXDATA);
+//	SetDlgItemText(IDC_EDIT_RXDATA, m_sRXDATA);
+	sID = m_sRXDATA;
+	m_cardNO=m_NO = sID.c_str();
+	UpdateData(FALSE);
+	
 }
 
 
@@ -797,64 +884,9 @@ void CCaptureDlg::OnBnClickedTestserv()
 	// TODO:  在此添加控件通知处理程序代码
 
 	///////////////////////////////////////////////////
-	//20170509
-	m_port = "44444";
-//	m_PORT.SetWindowText(m_port);
-	m_ip = "119.29.233.186";
-	DWORD dwIP = ntohl(inet_addr(m_ip));
 
 
 	sID = "JN201709141437";
-	///////////////////////////////////////////////////
-
-//	m_PORT.GetWindowText(m_port);
-//	m_IP.GetWindowText(m_ip);
-	m_msg = "连接IP: " + m_ip;
-	m_msg.Append("\n端口号: ");
-	m_msg.Append(m_port);
-	MessageBox(m_msg);
-
-	if (m_cli.init(m_ip.GetBuffer(), _ttoi(m_port)))
-	{
-		m_msg = "连接成功";
-	//	m_PORT.EnableWindow(FALSE);
-	//	m_IP.EnableWindow(FALSE);
-	//	mb_conn.EnableWindow(FALSE);
-	}
-	else
-	{
-		m_msg = "连接失败\n请确认IP或端口号";
-	}
-	MessageBox(m_msg);
-
-
-	//授权
-	int iRet = m_cli.login_auth("test", "test@1234", 0);
-	if (0 > iRet)
-	{
-		m_msg = "获取授权码失败\n";
-		m_msg.Append(m_cli.get_msg().c_str());
-		m_cli.close();
-	//	mb_conn.EnableWindow(TRUE);
-	}
-	else
-	{
-		m_msg = "获取授权码成功\n";
-		if (0 == iRet)
-		{
-			m_msg.Append("测试环境");
-		}
-		else
-		{
-			CString sAuth = m_cli.get_auth().c_str();
-			CString sRep1 = sAuth.Mid(8, 16);
-			CString sRep2('*', sRep1.GetLength());
-			sAuth.Replace(sRep1, sRep2);
-			m_msg.Append(sAuth);
-		}
-	}
-	MessageBox(m_msg);
-
 	//发送图片
 
 	vecPngIDReq.clear();
@@ -888,7 +920,7 @@ void CCaptureDlg::OnBnClickedTestserv()
 		{
 			m_msg.Append(" 失败\n");
 			m_msg.Append(m_cli.get_msg().c_str());
-			MessageBox(m_msg);
+		//	MessageBox(m_msg);
 			m_cli.close();
 	//		mb_login.EnableWindow(TRUE);
 			return;
@@ -897,7 +929,7 @@ void CCaptureDlg::OnBnClickedTestserv()
 		{
 			m_msg.Append(" 成功");
 		}
-		MessageBox(m_msg);
+	//	MessageBox(m_msg);
 	}
 
 	//发送信息
@@ -928,55 +960,103 @@ void CCaptureDlg::OnBnClickedTestserv()
 		}
 	}
 	MessageBox(m_msg);
+		
+}
 
 
+void CCaptureDlg::OnCommMscomm2()
+{
+	// TODO:  在此处添加消息处理程序代码
+	// TODO:  在此处添加消息处理程序代码
+	VARIANT variant_inp;
+	COleSafeArray safearray_inp;
+	LONG len, k;
+	BYTE rxdata[2048]; //设置BYTE数组 An 8-bit integerthat is not signed.
+	CString strtemp;
+	m_sRXDATA = "";
+	if (m_CtrlCard.get_CommEvent() == 2) //事件值为2表示接收缓冲区内有字符
+	{              ////////以下你可以根据自己的通信协议加入处理代码
+		variant_inp = m_CtrlCard.get_Input(); //读缓冲区
+		safearray_inp = variant_inp; //VARIANT型变量转换为ColeSafeArray型变量
+		len = safearray_inp.GetOneDimSize(); //得到有效数据长度
+		for (k = 0; k<len; k++)
+			safearray_inp.GetElement(&k, rxdata + k);//转换为BYTE型数组
+		for (k = 0; k<len; k++) //将数组转换为Cstring型变量
+		{
+			BYTE bt = *(char*)(rxdata + k); //字符型
+			strtemp.Format("%c", bt); //将字符送入临时变量strtemp存放
+			if (strtemp != '#'&&strtemp != '*')
+			{
+				m_sRXDATA += strtemp; //加入接收编辑框对应字符串 
+			}
+			UpdateData(FALSE);
+		}
+	}
+	//	SetDlgItemText(IDC_EDIT_RXDATA, m_sRXDATA);
+	sID = m_sRXDATA;
+	m_cardNO = m_NO = sID.c_str();
+	UpdateData(FALSE);
+	
 	//获取信息
-	std::map<std::string, std::string> mapUserInfoResp;
+	map<string, string> mapUserInfoResp;
 	int ret = m_cli.get_info(sID, mapUserInfoResp);
 	if (-1 == ret)
 	{
-		m_msg = "获取用户信息失败\n";
-		m_msg.Append(m_cli.get_msg().c_str());
-		m_cli.close();
-		//mb_conn.EnableWindow(TRUE);
+	m_msg = "获取用户信息失败\n";
+	m_msg.Append(m_cli.get_msg().c_str());
+	m_cli.close();
+	//mb_conn.EnableWindow(TRUE);
 	}
 	else if (0 == ret)
 	{
-		m_msg = "获取用户信息为空";
+	m_msg = "获取用户信息为空";
 	}
 	else
 	{
-		m_msg = "获取用户信息成功";
-		MessageBox(m_msg);
-		std::map<std::string, std::string>::iterator it = mapUserInfoResp.begin();
-		for (; it != mapUserInfoResp.end(); ++it)
-		{
-			m_msg = "获取 ";
-			m_msg.Append(it->first.c_str());
-			m_msg.Append(_T("\n"));
-			m_msg.Append(it->second.c_str());
-		//	MessageBox(m_msg);
-		}
+	//m_msg = "获取用户信息成功";
+//	MessageBox(m_msg);
+	std::map<std::string, std::string>::iterator it = mapUserInfoResp.begin();
+	//for (; it != mapUserInfoResp.end(); ++it)
+	//{
+	//m_msg = "获取 ";
+	//m_msg.Append(it->first.c_str());
+	//m_msg.Append(_T("\n"));
+	//m_msg.Append(it->second.c_str());
+	//	MessageBox(m_msg);
+	//}
+	it = mapUserInfoResp.begin();
+	CString rectmp;
+	rectmp = it->second.c_str();
+	m_age = atoi(rectmp);//年龄
+	it++;
+	rectmp = rectmp = it->second.c_str();
+	m_NO = rectmp; //编号
+	it++;
+	rectmp = rectmp = it->second.c_str();
+	m_ID = rectmp;//证件号
+	it++;
+	rectmp = rectmp = it->second.c_str();
+	m_name= rectmp;//姓名
+	it++;
+	rectmp = rectmp = it->second.c_str();//图像
 
-		it = mapUserInfoResp.begin();
-		CString rectmp;
-			rectmp=it->second.c_str();
-			m_age = atoi(rectmp);
-			UpdateData(FALSE);
-
+	it++;
+	rectmp = rectmp = it->second.c_str();
+	if (rectmp == "0")
+		m_sex = "男";//性别
+	else
+		m_sex = "女";
 	
 
-		if (mapUserInfoResp.end() != mapUserInfoResp.find("pic"))
-		{
-			vecPngIDResp.clear();
-			int size = split_vec(mapUserInfoResp["pic"].c_str(), vecPngIDResp, ',');
-		}
-		return;
+	UpdateData(FALSE);
+
+	if (mapUserInfoResp.end() != mapUserInfoResp.find("pic"))
+	{
+	vecPngIDResp.clear();
+	int size = split_vec(mapUserInfoResp["pic"].c_str(), vecPngIDResp, ',');
+	}
+	return;
 	}
 	MessageBox(m_msg);
-
-
-
-
-
+	
 }
