@@ -291,7 +291,7 @@ void CCaptureDlg::OnBnClickedSave()
 	//	KillTimer(1);
 	//	KillTimer(2);
 
-	//	CString strPath = "E:\\IMG\\SUN-0719";
+	//	CString strPath = "E:\\IMG\\TEST1012";
 		CString strPath = "E:\\IMG\\" + m_PID;//此处可随意定义，但格式必须与所示一致，会依次创建所有的，如果已经创建好了，则不创建
 		CString strWPath = strPath;
 		CString strTemp;
