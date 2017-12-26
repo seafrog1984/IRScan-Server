@@ -43,8 +43,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\OpenCV2.4.9\opencv\build\include;D:\OpenCV2.4.9\opencv\build\include\opencv;D:\OpenCV2.4.9\opencv\build\include\opencv2;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\OpenCV2.4.9\opencv\build\x86\vc12\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\Mycode\TEST_Git\IRScan-Server\IRScan\skin;D:\OpenCV2.4.9\opencv\build\include;D:\OpenCV2.4.9\opencv\build\include\opencv;D:\OpenCV2.4.9\opencv\build\include\opencv2;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Mycode\TEST_Git\IRScan-Server\IRScan\skin;D:\OpenCV2.4.9\opencv\build\x86\vc12\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>

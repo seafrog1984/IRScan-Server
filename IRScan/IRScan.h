@@ -9,7 +9,7 @@
 #endif
 
 #include "resource.h"		// main symbols
-
+#include "skin\SkinPlusPlus.h"
 
 // CIRScanApp:
 // See IRScan.cpp for the implementation of this class

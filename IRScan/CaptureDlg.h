@@ -80,6 +80,11 @@ public://数据库连接
 	CString m_sex;
 	int m_age;
 	CString m_ID;
+	string sScanID;//扫描号
+	string sCardID;//卡号
+	CString m_user;//用户名
+	CString m_passwd;//密码
+	CString strPath;//图像临时保存路径
 	afx_msg void OnBnClickedReadcard();
 	afx_msg void OnBnClickedAdj();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);

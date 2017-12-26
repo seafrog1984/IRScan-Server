@@ -11,6 +11,9 @@
 #define new DEBUG_NEW
 #endif
 
+CString g_port;
+CString g_ip;
+CString g_uport;
 
 // CAboutDlg dialog used for App About
 

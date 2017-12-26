@@ -30,6 +30,66 @@ void _client_t::set_req_head(req_head_t &head, const int &cmd)
 }
 
 
+bool _client_t::recv_data(char *buf, int buf_len)
+{
+	int recv_len = sock.Read(buf, buf_len);
+	if(0 >= recv_len)
+		return false;
+
+	int tmp_len = 0;
+	while(recv_len < buf_len)
+	{
+		tmp_len = sock.Read(&buf[recv_len], buf_len-recv_len);
+		if(0 >= tmp_len)
+			return false;
+
+		recv_len += tmp_len;
+	}
+	return true;
+}
+
+
+int _client_t::recv_resp(char *buf)
+{
+	char resp[MAX_DATA] = {0};
+	if(!recv_data(resp, sizeof(resp_head_t)))
+	{
+		sMsg = "get resp head fail 1";
+		return -1;
+	}
+	//解析头部
+	resp_head_t *resp_head = new resp_head_t();
+	memcpy(resp_head, resp, sizeof(resp_head_t));
+	if (10000000 < resp_head->length)
+	{
+		sMsg = "get resp head fail 2";
+		return -1;
+	}
+	//printf("anth head: %d, %d, %d\n", 
+	//	resp_head->length, resp_head->result, resp_head->timestamp);
+
+	//char tmp[26] = {0};
+	//sprintf(tmp, "%d-%d-%d", resp_head->result, resp_head->length, resp_head->timestamp);
+	//sprintf(tmp, "%d-%d-%d", resp_head->length, data_len, recv);
+	//sMsg = tmp;
+	//return -1;
+
+	if(0 == resp_head->length)
+		return 2;
+
+	if(!recv_data(buf, resp_head->length))
+	{
+		sMsg = "get resp data fail";
+		return -1;
+	}
+
+	if(0 != resp_head->result)
+		return 0;
+	else
+		return 1;
+}
+
+
 std::string _client_t::get_local_auth(std::string &mac, std::string &ip, std::string &device)
 {
 	int len = device.length();
@@ -119,38 +179,22 @@ int _client_t::login_auth(CString user, CString passwd, int flag)
 		return -1;
 	}
 	char resp[MAX_DATA] = {0};
-	int recv = sock.Read(resp, sizeof(resp_head_t));
-	if(0 >= recv)
+	int ret = recv_resp(resp);
+	if (0 > ret)
 	{
-		sMsg = "send auth resp fail";
-		return -1;
+		return false;
 	}
-	//解析头部
-	resp_head_t *resp_head = new resp_head_t();
-	memcpy(resp_head, resp, sizeof(resp_head_t));
-	//printf("anth head: %d, %d, %d\n", 
-	//	resp_head->length, resp_head->result, resp_head->timestamp);
 
-	recv = sock.Read(&resp[sizeof(resp_head_t)], resp_head->length);
-	if(0 >= recv)
-	{
-		sMsg = "send auth resp fail";
-		return -1;
-	}
 	//解析body
 	int data_len;
-	pos = sizeof(resp_head_t);
-	//for(int i=0; i<20; ++i)
-	//{
-	//	printf("#%c\n#", resp[pos+i]);
-	//}
-	memcpy(&data_len, &resp[pos], sizeof(int));
-	pos += sizeof(int);
+	memcpy(&data_len, resp, sizeof(int));
+	pos = sizeof(int);
+
 	std::string msg(&resp[pos], data_len);
 	pos += data_len;
 	//printf("auth body: %d, %s\n", data_len, msg.c_str());
 
-	if(0 != resp_head->result)
+	if(0 == ret)
 	{
 		sMsg = "auth fail, " + msg;
 		return -1;
@@ -234,33 +278,20 @@ int _client_t::check_auth(int flag)
 		return -1;
 	}
 	char resp[MAX_DATA] = {0};
-	int recv = sock.Read(resp, sizeof(resp_head_t));
-	if(0 >= recv)
+	int ret = recv_resp(resp);
+	if (0 > ret)
 	{
-		sMsg = "send check msg resp fail";
-		return -1;
+		return false;
 	}
-	//解析头部
-	resp_head_t *resp_head = new resp_head_t();
-	memcpy(resp_head, resp, sizeof(resp_head_t));
-	//printf("anth head: %d, %d, %d\n", 
-	//	resp_head->length, resp_head->result, resp_head->timestamp);
 
-	recv = sock.Read(&resp[sizeof(resp_head_t)], resp_head->length);
-	if(0 >= recv)
-	{
-		sMsg = "send check msg resp fail";
-		return -1;
-	}
 	//解析body
 	int data_len;
-	pos = sizeof(resp_head_t);
-	memcpy(&data_len, &resp[pos], sizeof(int));
-	pos += sizeof(int);
+	memcpy(&data_len, resp, sizeof(int));
+	pos = sizeof(int);
 	std::string msg(&resp[pos], data_len);
-	//printf("auth body: %d, %s\n", data_len, msg.c_str());
+	pos += data_len;
 
-	if(0 != resp_head->result)
+	if(0 == ret)
 	{
 		sMsg = "check auth fail, " + msg;
 		return -1;
@@ -274,7 +305,75 @@ int _client_t::check_auth(int flag)
 	return 1;
 }
 
-bool _client_t::send_png(const std::string &id, char *png, int png_len, std::vector<std::string> &vecPngID)
+
+int _client_t::get_scanid(const std::string &card_id, std::string &scan_id, const std::string &user)
+{
+	if(!bConnection)
+	{
+		sMsg = "no init connection";
+		return false;
+	}
+
+	if("" == sAuth)
+	{
+		sMsg = "invalid auth";
+		return false;
+	}
+
+	//验证授权请求串实现
+	req_head_t tHead;
+	set_req_head(tHead, REQ_CMD_GET_SCANID);
+
+	//验证授权请求数据
+	//头部+客户端标识数据大小(int)+客户端标识数据
+	tHead.length = 3*sizeof(int) + card_id.length() + user.length();
+	//请求数据拷贝
+	char data[MAX_DATA] = {0};
+	int pos=0;
+	memcpy(&data[pos], &tHead, sizeof(req_head_t));
+	pos += sizeof(req_head_t);
+	int len = card_id.length();
+	memcpy(&data[pos], &len, sizeof(int));
+	pos += sizeof(int);
+	memcpy(&data[pos], card_id.c_str(), len);
+	pos += len;
+	len = user.length();
+	memcpy(&data[pos], &len, sizeof(int));
+	pos += sizeof(int);
+	memcpy(&data[pos], user.c_str(), len);
+	pos += len;
+	//若服务端未授权则返回错误信息
+	if(!sock.Send(data, pos))
+	{
+		sMsg = "get cardid msg fail";
+		return -1;
+	}
+	char resp[MAX_DATA] = {0};
+	int ret = recv_resp(resp);
+	if (0 > ret)
+	{
+		return false;
+	}
+
+	//解析body
+	int data_len;
+	memcpy(&data_len, resp, sizeof(int));
+	pos = sizeof(int);
+	std::string msg(&resp[pos], data_len);
+	pos += data_len;
+
+	if(0 == ret)
+	{
+		sMsg = "get cardid fail, " + msg;
+		return -1;
+	}
+	scan_id = msg;
+
+	return 1;
+}
+
+
+bool _client_t::send_png(const std::string &scan_id, unsigned short *png, int png_len, std::vector<std::string> &vecPngID)
 {
 	if(!bConnection)
 	{
@@ -292,27 +391,31 @@ bool _client_t::send_png(const std::string &id, char *png, int png_len, std::vec
 	req_head_t tHead;
 	set_req_head(tHead, REQ_CMD_SEND_PNG);
 
-	std::string sPng = bytesToHexstring(png, png_len);
-	png_len = sPng.length();
 
-	int len = id.length();
+	//std::string sPng = bytesToHexstring(png, png_len);
+	//png_len *= sizeof(short);
+
+	int len1 = scan_id.length();
+	int len2 = png_len * sizeof(short);
+
 	//图片请求数据
 	//头部+客户端标识数据大小(int)+客户端标识数据
-	tHead.length = 2*sizeof(int) + png_len + len;
+	tHead.length = 2*sizeof(int) + len1 + len2;
 	//请求数据拷贝
-	char data[MAX_DATA] = {0};
+	char data[MAX_DATA+PIC_SIZE*2] = {0};
 	int pos=0;
 	memcpy(&data[pos], &tHead, sizeof(req_head_t));
 	pos += sizeof(req_head_t);
-	memcpy(&data[pos], &len, sizeof(int));
+	memcpy(&data[pos], &len1, sizeof(int));
 	pos += sizeof(int);
-	memcpy(&data[pos], id.c_str(), len);
-	pos += len;
+	memcpy(&data[pos], scan_id.c_str(), len1);
+	pos += len1;
 	//data
 	memcpy(&data[pos], &png_len, sizeof(int));
 	pos += sizeof(int);
-	memcpy(&data[pos], sPng.c_str(), png_len);
-	pos += png_len;
+	memcpy(&data[pos], png, len2);
+	pos += len2;
+
 	//若服务端未授权则返回错误信息
 	if(!sock.Send(data, pos))
 	{
@@ -320,39 +423,26 @@ bool _client_t::send_png(const std::string &id, char *png, int png_len, std::vec
 		return false;
 	}
 	char resp[MAX_DATA] = {0};
-	int recv = sock.Read(resp, sizeof(resp_head_t));
-	if(0 >= recv)
+	int ret = recv_resp(resp);
+	if (0 > ret)
 	{
-		sMsg = "send png resp fail";
 		return false;
 	}
-	//解析头部
-	resp_head_t *resp_head = new resp_head_t();
-	memcpy(resp_head, resp, sizeof(resp_head_t));
-	//printf("anth head: %d, %d, %d\n", 
-	//	resp_head->length, resp_head->result, resp_head->timestamp);
 
-	recv = sock.Read(&resp[sizeof(resp_head_t)], resp_head->length);
-	if(0 >= recv)
-	{
-		sMsg = "send png fail";
-		return false;
-	}
 	//解析body
 	int data_len;
-	pos = sizeof(resp_head_t);
-	memcpy(&data_len, &resp[pos], sizeof(int));
-	pos += sizeof(int);
+	memcpy(&data_len, resp, sizeof(int));
+	pos = sizeof(int);
 	std::string msg(&resp[pos], data_len);
-	//printf("auth body: %d, %s\n", data_len, msg.c_str());
+	//pos += data_len;
 
-	if(0 != resp_head->result)
+	if(0 == ret)
 	{
 		sMsg = "png send fail, " + msg;
 		return false;
 	}
-
 	vecPngID.push_back(msg);
+
 	return true;
 }
 
@@ -396,33 +486,20 @@ bool _client_t::send_info(std::map<std::string, std::string> &mapUserInfo)
 		return false;
 	}
 	char resp[MAX_DATA] = {0};
-	int recv = sock.Read(resp, sizeof(resp_head_t));
-	if(0 >= recv)
+	int ret = recv_resp(resp);
+	if (0 > ret)
 	{
-		sMsg = "send user msg resp fail";
 		return false;
 	}
-	//解析头部
-	resp_head_t *resp_head = new resp_head_t();
-	memcpy(resp_head, resp, sizeof(resp_head_t));
-	//printf("anth head: %d, %d, %d\n", 
-	//	resp_head->length, resp_head->result, resp_head->timestamp);
 
-	recv = sock.Read(&resp[sizeof(resp_head_t)], resp_head->length);
-	if(0 >= recv)
-	{
-		sMsg = "send user msg resp fail";
-		return false;
-	}
 	//解析body
 	int data_len;
-	pos = sizeof(resp_head_t);
-	memcpy(&data_len, &resp[pos], sizeof(int));
-	pos += sizeof(int);
+	memcpy(&data_len, resp, sizeof(int));
+	pos = sizeof(int);
 	std::string msg(&resp[pos], data_len);
-	//printf("auth body: %d, %s\n", data_len, msg.c_str());
+	pos += data_len;
 
-	if(0 != resp_head->result)
+	if(0 == ret)
 	{
 		sMsg = "user info send fail, " + msg;
 		return false;
@@ -431,7 +508,7 @@ bool _client_t::send_info(std::map<std::string, std::string> &mapUserInfo)
 }
 
 
-int _client_t::get_info(const std::string &id, std::map<std::string, std::string> &mapUserInfo)
+int _client_t::get_info(const std::string &scan_id, std::map<std::string, std::string> &mapUserInfo)
 {
 	if(!bConnection)
 	{
@@ -449,7 +526,7 @@ int _client_t::get_info(const std::string &id, std::map<std::string, std::string
 	req_head_t tHead;
 	set_req_head(tHead, REQ_CMD_GET_DATA);
 
-	int len = id.length();
+	int len = scan_id.length();
 	//图片请求数据
 	//头部+客户端标识数据大小(int)+客户端标识数据
 	tHead.length = sizeof(int) + len;
@@ -460,7 +537,7 @@ int _client_t::get_info(const std::string &id, std::map<std::string, std::string
 	pos += sizeof(req_head_t);
 	memcpy(&data[pos], &len, sizeof(int));
 	pos += sizeof(int);
-	memcpy(&data[pos], id.c_str(), len);
+	memcpy(&data[pos], scan_id.c_str(), len);
 	pos += len;
 	//若服务端未授权则返回错误信息
 	if(!sock.Send(data, pos))
@@ -469,48 +546,35 @@ int _client_t::get_info(const std::string &id, std::map<std::string, std::string
 		return -1;
 	}
 	char resp[MAX_DATA] = {0};
-	int recv = sock.Read(resp, sizeof(resp_head_t));
-	if(0 >= recv)
-	{
-		sMsg = "get user msg resp fail";
-		return -1;
-	}
-	//解析头部
-	resp_head_t *resp_head = new resp_head_t();
-	memcpy(resp_head, resp, sizeof(resp_head_t));
-	//printf("anth head: %d, %d, %d\n", 
-	//	resp_head->length, resp_head->result, resp_head->timestamp);
 
-	if(0 == resp_head->length)
+	int ret = recv_resp(resp);
+	if (0 > ret)
 	{
+		return false;
+	}
+    if (2 == ret)
+    {
 		return 0;
-	}
+    }
 
-	recv = sock.Read(&resp[sizeof(resp_head_t)], resp_head->length);
-	if(0 >= recv)
-	{
-		sMsg = "get user msg resp fail";
-		return -1;
-	}
 	//解析body
 	int data_len;
-	pos = sizeof(resp_head_t);
-	memcpy(&data_len, &resp[pos], sizeof(int));
-	pos += sizeof(int);
+	memcpy(&data_len, resp, sizeof(int));
+	pos = sizeof(int);
 	std::string msg(&resp[pos], data_len);
-	//printf("auth body: %d, %s\n", data_len, msg.c_str());
+	pos += data_len;
 
-	if(0 != resp_head->result)
+	if(0 == ret)
 	{
 		sMsg = "get info send fail, " + msg;
 		return -1;
 	}
-
 	split_map(msg.c_str(), mapUserInfo, '=', '&');
+
 	return 1;
 }
 
-bool _client_t::get_png(const std::string &id, const std::string &png_id, char *png)
+bool _client_t::get_png(const std::string &scan_id, const std::string &png_id, unsigned short *png)
 {
 	if(!bConnection)
 	{
@@ -530,16 +594,16 @@ bool _client_t::get_png(const std::string &id, const std::string &png_id, char *
 
 	//图片请求数据
 	//头部+客户端标识数据大小(int)+客户端标识数据
-	tHead.length = 2*sizeof(int) + id.length() + png_id.length();
+	tHead.length = 2*sizeof(int) + scan_id.length() + png_id.length();
 	//请求数据拷贝
 	char data[MAX_DATA] = {0};
 	int pos=0;
 	memcpy(&data[pos], &tHead, sizeof(req_head_t));
 	pos += sizeof(req_head_t);
-	int len = id.length();
+	int len = scan_id.length();
 	memcpy(&data[pos], &len, sizeof(int));
 	pos += sizeof(int);
-	memcpy(&data[pos], id.c_str(), len);
+	memcpy(&data[pos], scan_id.c_str(), len);
 	pos += len;
 	//data
 	len = png_id.length();
@@ -553,46 +617,59 @@ bool _client_t::get_png(const std::string &id, const std::string &png_id, char *
 		sMsg = "get png msg fail";
 		return false;
 	}
-	char resp[MAX_DATA] = {0};
-	int recv = sock.Read(resp, sizeof(resp_head_t));
-	if(0 >= recv)
-	{
-		sMsg = "get png resp fail";
-		return false;
-	}
-	//解析头部
-	resp_head_t *resp_head = new resp_head_t();
-	memcpy(resp_head, resp, sizeof(resp_head_t));
-	//printf("anth head: %d, %d, %d\n", 
-	//	resp_head->length, resp_head->result, resp_head->timestamp);
 
-	recv = sock.Read(&resp[sizeof(resp_head_t)], resp_head->length);
-	if(0 >= recv)
+	char resp[MAX_DATA+PIC_SIZE*2] = {0};
+	int ret = recv_resp(resp);
+	if (0 > ret)
 	{
-		sMsg = "get png fail";
 		return false;
 	}
+
 	//解析body
 	int data_len;
-	pos = sizeof(resp_head_t);
-	memcpy(&data_len, &resp[pos], sizeof(int));
-	pos += sizeof(int);
-	std::string msg(&resp[pos], data_len);
-	//printf("auth body: %d, %s\n", data_len, msg.c_str());
+	memcpy(&data_len, resp, sizeof(int));
+    pos = sizeof(int);
 
-	if(0 != resp_head->result)
+	if (0 == ret)
 	{
-		sMsg = "png get fail, " + msg;
+		//std::string msg(&resp[pos], data_len);
+		sMsg = "png get fail";
 		return false;
 	}
+	
+	int cnt = data_len/sizeof(unsigned short);
 
-	hexstringToBytes(msg.c_str(), msg.length(), png);
+	std::vector <unsigned short> vecPicData;
+	for (int i=0; i<cnt; ++i) 
+	{
+		vecPicData.push_back(*((unsigned short*)(&resp[pos] + i * sizeof(unsigned short))));
+	}
+
+	std::ofstream outfile((scan_id+png_id+".txt").c_str(), std::ios::binary);
+	//std::ofstream outfile((scan_id+png_id+".txt").c_str());
+	if(outfile.is_open())
+	{
+		if(0 < vecPicData.size())
+		{
+			outfile << vecPicData[0];
+			for (int i=1; i<cnt; ++i) 
+			{
+				outfile << " " << vecPicData[i];
+			}
+		}
+		//outfile.write(&resp[pos], resp_head->length-8);
+		outfile.close();
+	}
+	else
+	{
+		std::cout<<"不能打开文件!"<<std::endl;
+	}
 
 	return true;
 }
 
 
-bool _client_t::send_result(const std::string &id, char *png, int png_len)
+bool _client_t::send_result(const std::string &scan_id, unsigned short *png, int png_len, const std::string &user)
 {
 	if(!bConnection)
 	{
@@ -610,27 +687,35 @@ bool _client_t::send_result(const std::string &id, char *png, int png_len)
 	req_head_t tHead;
 	set_req_head(tHead, REQ_CMD_SEND_RESULT);
 
-	std::string sPng = bytesToHexstring(png, png_len);
-	png_len = sPng.length();
+	//std::string sPng = bytesToHexstring(png, png_len);
+	//png_len *= sizeof(short);
 
-	int len = id.length();
+	int len1 = scan_id.length();
+	int len2 = user.length();
+	int len3 = png_len * sizeof(short);
 	//图片请求数据
 	//头部+客户端标识数据大小(int)+客户端标识数据
-	tHead.length = 2*sizeof(int) + png_len + len;
+	tHead.length = 3*sizeof(int) + len1 + len2 + len3;
 	//请求数据拷贝
-	char data[MAX_DATA] = {0};
+	char data[MAX_DATA+PIC_SIZE*2] = {0};
 	int pos=0;
 	memcpy(&data[pos], &tHead, sizeof(req_head_t));
 	pos += sizeof(req_head_t);
-	memcpy(&data[pos], &len, sizeof(int));
+	memcpy(&data[pos], &len1, sizeof(int));
 	pos += sizeof(int);
-	memcpy(&data[pos], id.c_str(), len);
-	pos += len;
+	memcpy(&data[pos], scan_id.c_str(), len1);
+	pos += len1;
+	//user
+	memcpy(&data[pos], &len2, sizeof(int));
+	pos += sizeof(int);
+	memcpy(&data[pos], user.c_str(), len2);
+	pos += len2;
 	//data
 	memcpy(&data[pos], &png_len, sizeof(int));
 	pos += sizeof(int);
-	memcpy(&data[pos], sPng.c_str(), png_len);
-	pos += png_len;
+	memcpy(&data[pos], png, len3);
+	pos += len3;
+
 	//若服务端未授权则返回错误信息
 	if(!sock.Send(data, pos))
 	{
@@ -638,33 +723,20 @@ bool _client_t::send_result(const std::string &id, char *png, int png_len)
 		return false;
 	}
 	char resp[MAX_DATA] = {0};
-	int recv = sock.Read(resp, sizeof(resp_head_t));
-	if(0 >= recv)
+	int ret = recv_resp(resp);
+	if (0 > ret)
 	{
-		sMsg = "send result png resp fail";
 		return false;
 	}
-	//解析头部
-	resp_head_t *resp_head = new resp_head_t();
-	memcpy(resp_head, resp, sizeof(resp_head_t));
-	//printf("anth head: %d, %d, %d\n", 
-	//	resp_head->length, resp_head->result, resp_head->timestamp);
 
-	recv = sock.Read(&resp[sizeof(resp_head_t)], resp_head->length);
-	if(0 >= recv)
-	{
-		sMsg = "send result png fail";
-		return false;
-	}
 	//解析body
 	int data_len;
-	pos = sizeof(resp_head_t);
-	memcpy(&data_len, &resp[pos], sizeof(int));
-	pos += sizeof(int);
+	memcpy(&data_len, resp, sizeof(int));
+	pos = sizeof(int);
 	std::string msg(&resp[pos], data_len);
-	//printf("auth body: %d, %s\n", data_len, msg.c_str());
+	pos += data_len;
 
-	if(0 != resp_head->result)
+	if(0 == ret)
 	{
 		sMsg = "result png send fail, " + msg;
 		return false;
@@ -718,38 +790,25 @@ bool _client_t::get_users(CString &user, CString &passwd, std::map<std::string, 
 	}
 	
 	char resp[MAX_DATA] = {0};
-	int recv = sock.Read(resp, sizeof(resp_head_t));
-	if(0 >= recv)
+	int ret = recv_resp(resp);
+	if (0 > ret)
 	{
-		sMsg = "send get userlist resp fail";
 		return false;
 	}
-	//解析头部
-	resp_head_t *resp_head = new resp_head_t();
-	memcpy(resp_head, resp, sizeof(resp_head_t));
-	//printf("anth head: %d, %d, %d\n", 
-	//	resp_head->length, resp_head->result, resp_head->timestamp);
-   
-	recv = sock.Read(&resp[sizeof(resp_head_t)], resp_head->length);
-	if(0 >= recv)
-	{
-		sMsg = "send get userlist resp fail";
-		return false;
-	}
+
 	//解析body
 	int data_len;
-	pos = sizeof(resp_head_t);
-	//for(int i=0; i<20; ++i)
-	//{
-	//	printf("#%c\n#", resp[pos+i]);
-	//}
-    
-	memcpy(&data_len, &resp[pos], sizeof(int));
-	pos += sizeof(int);
+	memcpy(&data_len, resp, sizeof(int));
+	pos = sizeof(int);
 	std::string msg(&resp[pos], data_len);
 	pos += data_len;
-	//printf("auth body: %d, %s\n", data_len, msg.c_str());
- 
+
+	if(0 == ret)
+	{
+		sMsg = "get userlist fail, " + msg;
+		return false;
+	}
+
 	split_map(msg.c_str(), mapUserInfo, '=', '&');
 
 	memcpy(&data_len, &resp[pos], sizeof(int));
@@ -757,11 +816,6 @@ bool _client_t::get_users(CString &user, CString &passwd, std::map<std::string, 
 	std::string level(&resp[pos], data_len);
 	iLevel = atoi(level.c_str());
 
-	if(0 != resp_head->result)
-	{
-		sMsg = "get userlist fail, " + msg;
-		return false;
-	}
 	return true;
 }
 
@@ -840,39 +894,20 @@ bool _client_t::new_user(CString &user, CString &passwd,int &level, int &permiss
 	}
 
 	char resp[MAX_DATA] = {0};
-	int recv = sock.Read(resp, sizeof(resp_head_t));
-	if(0 >= recv)
+	int ret = recv_resp(resp);
+	if (0 > ret)
 	{
-		sMsg = "send new user resp fail";
 		return false;
 	}
-	//解析头部
-	resp_head_t *resp_head = new resp_head_t();
-	memcpy(resp_head, resp, sizeof(resp_head_t));
-	//printf("anth head: %d, %d, %d\n", 
-	//	resp_head->length, resp_head->result, resp_head->timestamp);
 
-	recv = sock.Read(&resp[sizeof(resp_head_t)], resp_head->length);
-	if(0 >= recv)
-	{
-		sMsg = "send new user resp fail";
-		return false;
-	}
 	//解析body
 	int data_len;
-	pos = sizeof(resp_head_t);
-	//for(int i=0; i<20; ++i)
-	//{
-	//	printf("#%c\n#", resp[pos+i]);
-	//}
-
-	memcpy(&data_len, &resp[pos], sizeof(int));
-	pos += sizeof(int);
+	memcpy(&data_len, resp, sizeof(int));
+	pos = sizeof(int);
 	std::string msg(&resp[pos], data_len);
 	pos += data_len;
-	//printf("auth body: %d, %s\n", data_len, msg.c_str());
 
-	if(0 != resp_head->result)
+	if(0 == ret)
 	{
 		sMsg = "new user fail, " + msg;
 		return false;
@@ -933,39 +968,20 @@ bool _client_t::del_user(CString &user, CString &loginuser, CString &loginpasswd
 	}
 
 	char resp[MAX_DATA] = {0};
-	int recv = sock.Read(resp, sizeof(resp_head_t));
-	if(0 >= recv)
+	int ret = recv_resp(resp);
+	if (0 > ret)
 	{
-		sMsg = "send del user resp fail";
 		return false;
 	}
-	//解析头部
-	resp_head_t *resp_head = new resp_head_t();
-	memcpy(resp_head, resp, sizeof(resp_head_t));
-	//printf("anth head: %d, %d, %d\n", 
-	//	resp_head->length, resp_head->result, resp_head->timestamp);
 
-	recv = sock.Read(&resp[sizeof(resp_head_t)], resp_head->length);
-	if(0 >= recv)
-	{
-		sMsg = "send del user resp fail";
-		return false;
-	}
 	//解析body
 	int data_len;
-	pos = sizeof(resp_head_t);
-	//for(int i=0; i<20; ++i)
-	//{
-	//	printf("#%c\n#", resp[pos+i]);
-	//}
-
-	memcpy(&data_len, &resp[pos], sizeof(int));
-	pos += sizeof(int);
+	memcpy(&data_len, resp, sizeof(int));
+	pos = sizeof(int);
 	std::string msg(&resp[pos], data_len);
 	pos += data_len;
-	//printf("auth body: %d, %s\n", data_len, msg.c_str());
 
-	if(0 != resp_head->result)
+	if(0 == ret)
 	{
 		sMsg = "del user fail, " + msg;
 		return false;
@@ -1042,39 +1058,20 @@ bool _client_t::update_user(CString &user, CString &passwd, int &permissions, CS
 	}
 
 	char resp[MAX_DATA] = {0};
-	int recv = sock.Read(resp, sizeof(resp_head_t));
-	if(0 >= recv)
+	int ret = recv_resp(resp);
+	if (0 > ret)
 	{
-		sMsg = "send update user resp fail";
 		return false;
 	}
-	//解析头部
-	resp_head_t *resp_head = new resp_head_t();
-	memcpy(resp_head, resp, sizeof(resp_head_t));
-	//printf("anth head: %d, %d, %d\n", 
-	//	resp_head->length, resp_head->result, resp_head->timestamp);
 
-	recv = sock.Read(&resp[sizeof(resp_head_t)], resp_head->length);
-	if(0 >= recv)
-	{
-		sMsg = "send update user resp fail";
-		return false;
-	}
 	//解析body
 	int data_len;
-	pos = sizeof(resp_head_t);
-	//for(int i=0; i<20; ++i)
-	//{
-	//	printf("#%c\n#", resp[pos+i]);
-	//}
-
-	memcpy(&data_len, &resp[pos], sizeof(int));
-	pos += sizeof(int);
+	memcpy(&data_len, resp, sizeof(int));
+	pos = sizeof(int);
 	std::string msg(&resp[pos], data_len);
 	pos += data_len;
-	//printf("auth body: %d, %s\n", data_len, msg.c_str());
 
-	if(0 != resp_head->result)
+	if(0 == ret)
 	{
 		sMsg = "update user fail, " + msg;
 		return false;

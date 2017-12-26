@@ -50,7 +50,10 @@ BOOL CIRScanApp::InitInstance()
 	InitCommonControlsEx(&InitCtrls);
 
 	CWinApp::InitInstance();
-
+	//º”‘ÿ∆§∑Ù
+	InitializeSkin(_T("XPCorona.ssk"));
+	LoadSkin(_T("XPCorona.ssk"));
+	//***********
 
 	AfxEnableControlContainer();
 
