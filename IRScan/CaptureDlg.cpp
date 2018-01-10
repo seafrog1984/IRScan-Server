@@ -244,8 +244,8 @@ BOOL CCaptureDlg::OnInitDialog()
 	//m_ip = "119.29.233.186";
 	DWORD dwIP = ntohl(inet_addr(m_ip));
 
-	g_user=m_user = "test";
-	g_passwd=m_passwd = "Test@1234";
+	m_user =g_user;
+	m_passwd =g_passwd;
 
 	sCardID = "CARD100000000001";
 	sScanID = "SCAN001";
@@ -273,7 +273,8 @@ BOOL CCaptureDlg::OnInitDialog()
 
 
 	//授权
-	int iRet = m_cli.login_auth("test", "test@1234", 0);
+	std::string sPermissions;
+	int iRet = m_cli.login_auth("test", "test@1234", sPermissions, 0);
 	if (0 > iRet)
 	{
 		m_msg = "获取授权码失败\n";

@@ -15,13 +15,13 @@
 class _client_t
 {
 public:
-	_client_t() : bConnection(false) {}
+	_client_t(): bConnection(false) {}
 	~_client_t()
 	{
 		close();
 	}
 
-	void close()
+	void close() 
 	{
 		if (bConnection)
 			sock.Close();
@@ -39,9 +39,9 @@ public:
 	bool init(const std::string &host, short port);
 
 	//获取授权
-	int login_auth(CString user, CString passwd, int flag = 1);
-	//验证授权
-	int check_auth(int flag = 1);
+	int login_auth(CString user, CString passwd, std::string &permissions, int flag=1);
+    //验证授权
+	int check_auth(int flag=1);
 	//注册卡信息
 	int set_cardid(std::map<std::string, std::string> &mapCardInfo, const std::string &user);
 	//注册扫描ID
@@ -62,7 +62,7 @@ public:
 	//获取用户列表
 	bool get_users(CString &user, CString &passwd, std::map<std::string, std::string> &mapUserInfo, int &level);
 	//新增用户
-	bool new_user(CString &user, CString &passwd, int &level, int &permissions, CString &loginuser, CString &loginpasswd);
+	bool new_user(CString &user, CString &passwd,int &level, int &permissions, CString &loginuser, CString &loginpasswd);
 	//删除用户
 	bool del_user(CString &user, CString &loginuser, CString &loginpasswd);
 	//修改用户
@@ -71,11 +71,11 @@ public:
 private:
 	//设置请求头
 	void set_req_head(req_head_t &head, const int &cmd);
-	//接收数据
+    //接收数据
 	bool recv_data(char *buf, int buf_len);
-	//接受应答
+    //接受应答
 	int recv_resp(char *buf);
-
+	
 	//验证授权
 	std::string get_local_auth(std::string &mac, std::string &ip, std::string &device);
 

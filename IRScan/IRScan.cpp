@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "IRScan.h"
 #include "IRScanDlg.h"
+#include "LogDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -73,7 +74,7 @@ BOOL CIRScanApp::InitInstance()
 	// such as the name of your company or organization
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 
-	CIRScanDlg dlg;
+	CLogDlg dlg;
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)

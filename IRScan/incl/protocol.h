@@ -54,6 +54,15 @@ typedef struct _usr_info
 } usr_info_t;
 */
 
+typedef struct _permissions
+{
+    bool p1;
+	bool p2;
+	bool p3;
+
+	_permissions(): p1(false), p2(false), p3(false) {}
+} permissions_t;
+
 #pragma pack()
 
 

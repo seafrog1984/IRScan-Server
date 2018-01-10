@@ -84,6 +84,9 @@
     <ClInclude Include="utils\string\string_utils.h">
       <Filter>utils\string</Filter>
     </ClInclude>
+    <ClInclude Include="LogDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IRScan.cpp">
@@ -124,6 +127,9 @@
     </ClCompile>
     <ClCompile Include="utils\string\string_utils.cpp">
       <Filter>utils\string</Filter>
+    </ClCompile>
+    <ClCompile Include="LogDlg.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

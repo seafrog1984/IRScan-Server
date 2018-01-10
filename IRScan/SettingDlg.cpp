@@ -55,6 +55,7 @@ BEGIN_MESSAGE_MAP(CSettingDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_RADIO3, &CSettingDlg::OnBnClickedRadio3)
 	ON_BN_CLICKED(IDOK, &CSettingDlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDC_RADIO4, &CSettingDlg::OnBnClickedRadio4)
+	ON_LBN_SELCHANGE(IDC_LIST1, &CSettingDlg::OnSelchangeList1)
 END_MESSAGE_MAP()
 
 
@@ -417,4 +418,22 @@ void CSettingDlg::OnBnClickedRadio4()
 	// TODO:  在此添加控件通知处理程序代码
 	((CButton*)GetDlgItem(IDC_RADIO4))->SetCheck(TRUE);
 	m_opt_level = 0;
+}
+
+
+void CSettingDlg::OnSelchangeList1()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	int nSel = m_LIST.GetCurSel();
+	m_LIST.GetText(nSel, m_list);
+	//MessageBox(m_list);
+	if (0 != m_opt)
+	{
+		GetDlgItem(IDC_EDIT_USER)->SetWindowText(m_list);
+		if (2 == m_opt)
+		{
+			set_permissions();
+			m_PASSWD.SetWindowText(_T(""));
+		}
+	}
 }

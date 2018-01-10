@@ -113,6 +113,7 @@
     <ClInclude Include="incl\protocol.h" />
     <ClInclude Include="IRScan.h" />
     <ClInclude Include="IRScanDlg.h" />
+    <ClInclude Include="LogDlg.h" />
     <ClInclude Include="mscomm1.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SettingDlg.h" />
@@ -130,6 +131,7 @@
     <ClCompile Include="FGInterface.cpp" />
     <ClCompile Include="IRScan.cpp" />
     <ClCompile Include="IRScanDlg.cpp" />
+    <ClCompile Include="LogDlg.cpp" />
     <ClCompile Include="mscomm1.cpp" />
     <ClCompile Include="SettingDlg.cpp" />
     <ClCompile Include="stdafx.cpp">
