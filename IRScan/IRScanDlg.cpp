@@ -14,6 +14,8 @@
 CString g_port;
 CString g_ip;
 CString g_uport;
+CString g_user;
+CString g_passwd;
 
 // CAboutDlg dialog used for App About
 

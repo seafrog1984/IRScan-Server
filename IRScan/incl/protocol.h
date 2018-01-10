@@ -5,12 +5,14 @@
 
 #define   REQ_CMD_GET_AUTH      1
 #define   REQ_CMD_CHECK_AUTH    2
-#define   REQ_CMD_GET_SCANID    3
+#define   REQ_CMD_SET_SCANID    3
 #define   REQ_CMD_SEND_PNG      4
 #define   REQ_CMD_SEND_DATA     5
 #define   REQ_CMD_GET_PNG       6
 #define   REQ_CMD_GET_DATA      7
 #define   REQ_CMD_SEND_RESULT   8
+#define   REQ_CMD_SET_CARDID    13
+#define   REQ_CMD_GET_RESULT    14
 
 #define   REQ_CONTROL_GET_LIST  9
 #define   REQ_CONTROL_NEW_USER  10

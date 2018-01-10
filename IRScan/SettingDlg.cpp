@@ -9,6 +9,8 @@
 extern CString g_port;
 extern CString g_ip;
 extern CString g_uport;
+extern CString g_user;
+extern CString g_passwd;
 
 // CSettingDlg 对话框
 
@@ -52,6 +54,7 @@ BEGIN_MESSAGE_MAP(CSettingDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_RADIO2, &CSettingDlg::OnBnClickedRadio2)
 	ON_BN_CLICKED(IDC_RADIO3, &CSettingDlg::OnBnClickedRadio3)
 	ON_BN_CLICKED(IDOK, &CSettingDlg::OnBnClickedOk)
+	ON_BN_CLICKED(IDC_RADIO4, &CSettingDlg::OnBnClickedRadio4)
 END_MESSAGE_MAP()
 
 
@@ -65,13 +68,18 @@ BOOL CSettingDlg::OnInitDialog()
 	// TODO:  在此添加额外的初始化
 	m_ip = g_ip;
 	m_port = g_uport;
+	m_user = g_user;
+	m_passwd = g_passwd;
+	m_level = 0;
+	m_opt_level = 0;
 
 	m_PORT.SetWindowText(m_port);
 
 	DWORD dwIP = ntohl(inet_addr(m_ip));
 	m_IP.SetAddress(dwIP);
 
-
+	OnBnClickedRadio1();
+	OnBnClickedRadio4();
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常:  OCX 属性页应返回 FALSE
 }
@@ -183,6 +191,8 @@ int CSettingDlg::get_permissions()
 void CSettingDlg::OnBnClickedListUser()
 {
 	// TODO:  在此添加控件通知处理程序代码
+	m_user = "admin";
+	m_passwd = "test@1234";
 	if (!m_cli.get_users(m_user, m_passwd, m_userinfo, m_level))
 	{
 		m_msg = "获取用户列表失败\n";
@@ -306,7 +316,7 @@ void CSettingDlg::OnBnClickedRadio3()
 void CSettingDlg::OnBnClickedOk()
 {
 	// TODO:  在此添加控件通知处理程序代码
-	CDialogEx::OnOK();
+//	CDialogEx::OnOK();
 	if (0 == m_opt)
 	{
 		CString sUser;
@@ -397,4 +407,14 @@ void CSettingDlg::OnBnClickedOk()
 		}
 		MessageBox(m_msg);
 	}
+
+
+}
+
+
+void CSettingDlg::OnBnClickedRadio4()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	((CButton*)GetDlgItem(IDC_RADIO4))->SetCheck(TRUE);
+	m_opt_level = 0;
 }

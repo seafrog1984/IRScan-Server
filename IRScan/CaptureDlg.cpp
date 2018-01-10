@@ -29,7 +29,8 @@ vector<Mat> showimg(12);
 extern CString g_port;
 extern CString g_ip;
 extern CString g_uport;
-
+extern CString g_user;
+extern CString g_passwd;
 
 // CCaptureDlg 对话框
 
@@ -243,8 +244,8 @@ BOOL CCaptureDlg::OnInitDialog()
 	//m_ip = "119.29.233.186";
 	DWORD dwIP = ntohl(inet_addr(m_ip));
 
-	m_user = "test";
-	m_passwd = "test@1234";
+	g_user=m_user = "test";
+	g_passwd=m_passwd = "Test@1234";
 
 	sCardID = "CARD100000000001";
 	sScanID = "SCAN001";
@@ -918,16 +919,79 @@ void CCaptureDlg::OnOncommMscomm1()
 void CCaptureDlg::OnBnClickedReadcard()
 {
 	// TODO:  在此添加控件通知处理程序代码
-	ifstream fin("info.txt");
-	string str1, str2, str3,  str5;
-	int age;
-	fin >> str1 >> str2 >> str3 >> age>> str5;
-	m_PID=m_cardNO = str1.c_str();
-	m_name = str2.c_str();
-	m_sex = str3.c_str();
-	m_age = age;
-	m_ID = str5.c_str();
-	UpdateData(FALSE);
+	//ifstream fin("info.txt");
+	//string str1, str2, str3,  str5;
+	//int age;
+	//fin >> str1 >> str2 >> str3 >> age>> str5;
+	//m_PID=m_cardNO = str1.c_str();
+	//m_name = str2.c_str();
+	//m_sex = str3.c_str();
+	//m_age = age;
+	//m_ID = str5.c_str();
+	//UpdateData(FALSE);
+//	sCardID = "CARD100000000001";
+	m_cardNO = "CARD100000000001";
+	sID = "SCAN001";
+	map<string, string> mapUserInfoResp;
+	int ret = m_cli.get_info(sID, mapUserInfoResp);
+	if (-1 == ret)
+	{
+		m_msg = "获取用户信息失败\n";
+		m_msg.Append(m_cli.get_msg().c_str());
+		m_cli.close();
+		//mb_conn.EnableWindow(TRUE);
+	}
+	else if (0 == ret)
+	{
+		m_msg = "获取用户信息为空";
+	}
+	else
+	{
+		//m_msg = "获取用户信息成功";
+		//	MessageBox(m_msg);
+		std::map<std::string, std::string>::iterator it = mapUserInfoResp.begin();
+		//for (; it != mapUserInfoResp.end(); ++it)
+		//{
+		//m_msg = "获取 ";
+		//m_msg.Append(it->first.c_str());
+		//m_msg.Append(_T("\n"));
+		//m_msg.Append(it->second.c_str());
+		//	MessageBox(m_msg);
+		//}
+		it = mapUserInfoResp.begin();
+		CString rectmp;
+		rectmp = it->second.c_str();
+		m_age = atoi(rectmp);//年龄
+		it++;
+		rectmp = rectmp = it->second.c_str();
+		m_ID = rectmp;//证件号
+		it++;
+		rectmp = rectmp = it->second.c_str();
+		m_name = rectmp;//姓名
+		it++;
+		rectmp = rectmp = it->second.c_str();//图像
+		it++;
+		rectmp = rectmp = it->second.c_str();
+		m_NO = rectmp; //编号
+		it++;
+
+		rectmp = rectmp = it->second.c_str();
+		if (rectmp == "0")
+			m_sex = "男";//性别
+		else
+			m_sex = "女";
+
+
+		UpdateData(FALSE);
+
+		if (mapUserInfoResp.end() != mapUserInfoResp.find("pic"))
+		{
+			vecPngIDResp.clear();
+			int size = split_vec(mapUserInfoResp["pic"].c_str(), vecPngIDResp, ',');
+		}
+		return;
+	}
+	MessageBox(m_msg);
 
 	pic_num = 0;
 		

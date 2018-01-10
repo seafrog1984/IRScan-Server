@@ -56,4 +56,5 @@ public:
 	CButton m_CHECK2;
 	CButton m_CHECK3;
 	afx_msg void OnBnClickedOk();
+	afx_msg void OnBnClickedRadio4();
 };
