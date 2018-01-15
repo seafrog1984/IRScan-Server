@@ -87,6 +87,9 @@
     <ClInclude Include="LogDlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="skin\SkinPPWTL.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IRScan.cpp">

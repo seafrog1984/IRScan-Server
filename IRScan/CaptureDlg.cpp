@@ -32,6 +32,7 @@ extern CString g_uport;
 extern CString g_user;
 extern CString g_passwd;
 
+CString strPath;
 // CCaptureDlg 对话框
 
 IMPLEMENT_DYNAMIC(CCaptureDlg, CDialogEx)
@@ -68,6 +69,7 @@ void CCaptureDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_ID, m_ID);
 
 	DDX_Control(pDX, IDC_MSCOMM2, m_CtrlCard);
+	DDX_Control(pDX, IDC_NO, m_SCANID);
 }
 
 
@@ -86,6 +88,7 @@ ON_BN_CLICKED(IDC_P3, &CCaptureDlg::OnBnClickedP3)
 ON_BN_CLICKED(IDC_P4, &CCaptureDlg::OnBnClickedP4)
 ON_BN_CLICKED(IDC_CONFIRM, &CCaptureDlg::OnBnClickedConfirm)
 ON_BN_CLICKED(IDC_TESTSERV, &CCaptureDlg::OnBnClickedTestserv)
+ON_BN_CLICKED(IDC_SAVEALL, &CCaptureDlg::OnBnClickedSaveall)
 END_MESSAGE_MAP()
 
 
@@ -171,11 +174,16 @@ BOOL CCaptureDlg::OnInitDialog()
 
 	// TODO:  在此添加额外的初始化
 	
-	/*namedWindow("view", WINDOW_AUTOSIZE);
+	namedWindow("view", WINDOW_AUTOSIZE);
 	HWND hWnd = (HWND)cvGetWindowHandle("view");
 	HWND hParent = ::GetParent(hWnd);
 	::SetParent(hWnd, GetDlgItem(IDC_PIC)->m_hWnd);
-	::ShowWindow(hParent, SW_HIDE);*/
+	::ShowWindow(hParent, SW_HIDE);
+
+	CRect rect;
+	GetDlgItem(IDC_PIC)->GetWindowRect(&rect);           //IDC_WAVE_DRAW为Picture Control的ID  
+	ScreenToClient(&rect);
+	GetDlgItem(IDC_PIC)->MoveWindow(30, 5, 480, 640, true);    //固定Picture Control控件的大小 
 	
 	//控制串口初始化
 	if (m_CtrlCom.get_PortOpen())
@@ -238,6 +246,7 @@ BOOL CCaptureDlg::OnInitDialog()
 	m_port =g_port= str2.c_str();
 	g_uport = str3.c_str();
 
+	fin.close();
 	////数据库连接
 	//m_port = "44444";
 	////	m_PORT.SetWindowText(m_port);
@@ -249,13 +258,14 @@ BOOL CCaptureDlg::OnInitDialog()
 
 	sCardID = "CARD100000000001";
 	sScanID = "SCAN001";
+
 	///////////////////////////////////////////////////
 	//	m_PORT.GetWindowText(m_port);
 	//	m_IP.GetWindowText(m_ip);
 	m_msg = "连接IP: " + m_ip;
 	m_msg.Append("\n端口号: ");
 	m_msg.Append(m_port);
-	MessageBox(m_msg);
+//	MessageBox(m_msg);
 
 	if (m_cli.init(m_ip.GetBuffer(), _ttoi(m_port)))
 	{
@@ -280,6 +290,7 @@ BOOL CCaptureDlg::OnInitDialog()
 		m_msg = "获取授权码失败\n";
 		m_msg.Append(m_cli.get_msg().c_str());
 		m_cli.close();
+		MessageBox(m_msg);
 		//	mb_conn.EnableWindow(TRUE);
 	}
 	else
@@ -296,7 +307,7 @@ BOOL CCaptureDlg::OnInitDialog()
 			CString sRep2('*', sRep1.GetLength());
 			sAuth.Replace(sRep1, sRep2);          
 			m_msg.Append(sAuth);
-			MessageBox(m_msg);
+		//	MessageBox(m_msg);
 		}
 	}
 //	MessageBox(m_msg);
@@ -343,9 +354,28 @@ void CCaptureDlg::OnBnClickedSave()
 			return;
 	//	KillTimer(1);
 	//	KillTimer(2);
+	
+		Mat g_dst;
+		Ori2Mat(tmp, g_dst);
+		Mat g_dstImage4, tempImage;
 
-	//	CString strPath = "E:\\IMG\\TEST1019";
-	//	CString strPath = "E:\\IMG\\" + m_PID;//此处可随意定义，但格式必须与所示一致，会依次创建所有的，如果已经创建好了，则不创建
+
+		rot90(g_dst, tempImage);
+	
+		resize(tempImage, g_dstImage4, Size(tempImage.cols * 0.5, tempImage.rows * 0.5), (0, 0), (0, 0), INTER_LINEAR);
+
+		if (pic_num < 12)
+		{
+			g_dstImage4.copyTo(showimg[pic_num]);
+		}
+		
+		MultiImage_OneWin("T", showimg, cvSize(4, 3), cvSize(160, 120));
+
+	
+		
+		
+		strPath = "E:\\IMG\\TEMP";
+		//	CString strPath = "E:\\IMG\\" + m_PID;//此处可随意定义，但格式必须与所示一致，会依次创建所有的，如果已经创建好了，则不创建
 		CString strWPath = strPath;
 		CString strTemp;
 		if (!PathFileExists(strPath))//文件夹不存在则创建
@@ -353,7 +383,7 @@ void CCaptureDlg::OnBnClickedSave()
 
 			strPath.TrimLeft(strPath.Left(3));
 			int i = strPath.Find("\\");
-			if (i>0) 
+			if (i>0)
 			{
 				strTemp = strWPath.Left(3) + strPath.Left(i);
 			}
@@ -381,29 +411,12 @@ void CCaptureDlg::OnBnClickedSave()
 			}
 		}
 	
-		Mat g_dst;
-		Ori2Mat(tmp, g_dst);
-		Mat g_dstImage4, tempImage;
-
-		rot90(g_dst, tempImage);
-		namedWindow("test");
-		imshow("test", g_dst);
-
-		pyrDown(tempImage, g_dstImage4, Size(tempImage.cols / 2, tempImage.rows / 2));
-		if (pic_num < 12)
-		{
-			g_dstImage4.copyTo(showimg[pic_num]);
-			pic_num++;
-		}
-
-
-		MultiImage_OneWin("T", showimg, cvSize(4, 3), cvSize(160, 120));
-
 		CString picno;
 		picno.Format("%d", pic_num);
-		strPath = strPath + '\\' + picno + ".dat";
-	//	ofstream fout((LPSTR)(LPCSTR)strPath);
-		ofstream fout((LPSTR)(LPCSTR)"E:\\IMG\\test2.dat");
+		CString savePath;
+		savePath = strPath + '\\' + picno + ".dat";
+		ofstream fout((LPSTR)(LPCSTR)savePath);
+	//	ofstream fout((LPSTR)(LPCSTR)"E:\\IMG\\test2.dat");
 		for (int i = 0; i < PIC_SIZE; i++)
 		{
 			fout << *tmp++ << ' ';
@@ -412,125 +425,7 @@ void CCaptureDlg::OnBnClickedSave()
 		fout.close();
 
 		vecPngIDReq.clear();
-
-		
-		std::vector<CString> vecFiles;
-		CString strFoldername = "E:\\IMG\\0719-bak";
-		CString m_cstrFileList = "";
-		CFileFind tempFind;
-		BOOL bFound; //判断是否成功找到文件  
-		bFound = tempFind.FindFile(strFoldername + "\\*.dat");   //修改" "内内容给限定查找文件类型  
-		CString strTmp;   //如果找到的是文件夹 存放文件夹路径  
-		while (bFound)      //遍历所有文件  
-		{
-			bFound = tempFind.FindNextFile(); //第一次执行FindNextFile是选择到第一个文件，以后执行为选择到下一个文件  
-			if (tempFind.IsDots())
-				continue; //如果找到的是返回上层的目录 则结束本次查找  
-			if (tempFind.IsDirectory())   //找到的是文件夹，则遍历该文件夹下的文件  
-			{
-			}
-			else
-			{
-				strTmp = tempFind.GetFileName(); //保存文件名，包括后缀名  
-				// 在此处添加对找到文件的处理  
-				vecFiles.push_back(strTmp);
-			}
-		}
-		tempFind.Close();
-	
-		int size = vecFiles.size();
-		if (0 == size)
-		{
-			return;
-		}
-
-		unsigned short sPicData[PIC_SIZE]; // = (unsigned short*)malloc(PIC_SIZE * sizeof(short));
-		for (int i = 0; i<size; ++i)
-		{
-			memset(sPicData, 0, PIC_SIZE*sizeof(short));
-
-			std::ifstream fin(vecFiles[i].GetBuffer());
-			for (int j = 0; j<PIC_SIZE; ++j)
-			{
-				fin >> *(sPicData + j);
-				if (*(sPicData + j) == ' ')
-					j--;
-			}
-
-			m_msg = "发送图片 ";
-			m_msg.Append(vecFiles[i].GetBuffer());
-
-			if (!m_cli.send_png(sScanID, sPicData, PIC_SIZE, vecPngIDReq))
-			{
-				m_msg.Append(" 失败\n原因是：");
-				m_msg.Append(m_cli.get_msg().c_str());
-				MessageBox(m_msg);
-				m_cli.close();
-
-				break;
-			}
-			else
-			{
-				m_msg.Append(" 成功");
-			}
-			MessageBox(m_msg);
-		}
-
-
-		//发送信息
-		//if (0 == vecPngIDReq.size())
-		//{
-		//	m_msg = "图片index列表为空\n请先调用「发送图片」接口";
-		//}
-		//else
-		//{
-		//	std::map<std::string, std::string> mapUserInfo;
-		//	mapUserInfo["id"] = sID;
-		//	mapUserInfo["name"] = "张三";
-		//	mapUserInfo["sex"] = "0";
-		//	mapUserInfo["age"] = "18";
-		//	mapUserInfo["identity"] = "337788";
-		//	mapUserInfo["pic"] = vec_join(vecPngIDReq, ',');
-
-		//	if (!m_cli.send_info(mapUserInfo))
-		//	{
-		//		m_msg = "发送用户信息失败\n";
-		//		m_msg.Append(m_cli.get_msg().c_str());
-		//		m_cli.close();
-		//	//	mb_conn.EnableWindow(TRUE);
-		//	}
-		//	else
-		//	{
-		//		m_msg = "发送用户信息成功";
-		//	}
-		//}
-		//MessageBox(m_msg);
-
-		if (0 == vecPngIDReq.size())
-		{
-			m_msg = "图片index列表为空\n请先调用「发送图片」接口";
-		}
-		else
-		{
-			std::map<std::string, std::string> mapUserInfo;
-			mapUserInfo["scan_id"] = sScanID;
-			//mapUserInfo["card_id"] = sCardID;
-			mapUserInfo["pic"] = vec_join(vecPngIDReq, ',');
-			mapUserInfo["user"] = "test";
-
-			if (!m_cli.send_info(mapUserInfo))
-			{
-				m_msg = "发送用户信息失败\n";
-				m_msg.Append(m_cli.get_msg().c_str());
-				m_cli.close();
-			}
-			else
-			{
-				m_msg = "发送用户信息成功";
-			}
-		}
-		MessageBox(m_msg);
-
+		pic_num++;
 
 	//	SetTimer(1, 0, NULL);
 
@@ -685,7 +580,7 @@ void CCaptureDlg::MultiImage_OneWin(const std::string& MultiShow_WinName, const 
 		ImgDisp_Size = cvSize(Img_OrigSize.width, Img_OrigSize.height);
 	//******************** Check Image numbers with Subplot layout ********************//
 //	int Img_Num = (int)SrcImg_V.size();
-	int Img_Num = pic_num;
+	int Img_Num = pic_num+1;
 	if (Img_Num > SubPlot.width * SubPlot.height)
 	{
 		cout << "Your SubPlot Setting is too small !" << endl;
@@ -1102,6 +997,10 @@ void CCaptureDlg::OnBnClickedP4()
 void CCaptureDlg::OnBnClickedConfirm()
 {
 	// TODO:  在此添加控件通知处理程序代码
+
+	m_SCANID.GetWindowText(m_NO);
+	sScanID = m_NO.GetBuffer();
+
 	map<std::string, std::string> mapUserInfoResp;
 	int ret = m_cli.get_info(sScanID, mapUserInfoResp);
 	if (-1 == ret)
@@ -1172,8 +1071,14 @@ void CCaptureDlg::OnBnClickedTestserv()
 	// TODO:  在此添加控件通知处理程序代码
 
 	///////////////////////////////////////////////////
-	CFileDialog dlg(TRUE, _T("*.dat"), NULL, OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY, _T("data files (*.dat) |*.dat | All Files (*.*) |*.*||"), NULL);                            // 选项图片的约定     
-	dlg.m_ofn.lpstrTitle = _T("Open Image");// 打开文件对话框的标题名     
+	//CFileDialog dlg(TRUE, _T("*.dat"), NULL, OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY, _T("data files (*.dat) |*.dat | All Files (*.*) |*.*||"), NULL);                            // 选项图片的约定     
+	//dlg.m_ofn.lpstrTitle = _T("Open Image");// 打开文件对话框的标题名     
+	
+	char strExt[_MAX_EXT] = "dat";//设置读取的文件类型
+	CString szFilter = "Dat Files (*.dat)|*.dat|All Files (*.*)|*.*||";
+	CFileDialog   dlg(TRUE, strExt, NULL, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_ALLOWMULTISELECT, szFilter);
+	dlg.m_ofn.lpstrTitle = _T("请选择图像文件");//设置标题
+
 	if (dlg.DoModal() != IDOK)             // 判断是否获得图片         
 		return;
 	CString m_path = dlg.GetPathName();
@@ -1207,8 +1112,7 @@ void CCaptureDlg::OnBnClickedTestserv()
 
 //	pyrDown(tempImage, g_dstImage4, Size(160, 120));
 
-	for (int i = 0; i < 12; i++)
-		g_dstImage4.copyTo(imgs[i]);
+	
 
 	//		imshow("【效果图二resize放大】", g_dstImage2);
 	imshow("view", g_dstImage3);
@@ -1218,10 +1122,71 @@ void CCaptureDlg::OnBnClickedTestserv()
 	cvMoveWindow("view", (Scree_W - g_dstImage3.cols) / 2 - 300, (Scree_H - g_dstImage3.rows) / 2 - 50);
 
 	//		imshow("【效果图二向下采样】", g_dstImage4);
-	pic_num++;
+	if (pic_num < 12)
+	{
+		g_dstImage4.copyTo(showimg[pic_num]);
+	}
 
-	MultiImage_OneWin("T", imgs, cvSize(4, 3), cvSize(160, 120));
-	
+	MultiImage_OneWin("T", showimg, cvSize(4, 3), cvSize(160, 120));
+
+
+
+	strPath = "E:\\IMG\\TEMP";
+	//	CString strPath = "E:\\IMG\\" + m_PID;//此处可随意定义，但格式必须与所示一致，会依次创建所有的，如果已经创建好了，则不创建
+	CString strWPath = strPath;
+	CString strTemp;
+	if (!PathFileExists(strPath))//文件夹不存在则创建
+	{
+
+		strPath.TrimLeft(strPath.Left(3));
+		int i = strPath.Find("\\");
+		if (i>0)
+		{
+			strTemp = strWPath.Left(3) + strPath.Left(i);
+		}
+		else
+		{
+			strTemp = strWPath;
+		}
+		strPath.TrimLeft(strPath.Left(i));
+		if (!PathFileExists(strTemp))
+			CreateDirectory(strTemp, NULL);
+
+		while (strPath.Find("\\") == 0)
+		{
+			strPath.TrimLeft(strPath.Left(1));
+			int j = strPath.Find("\\");
+			if (j > 0)
+			{
+				strTemp = strTemp + "\\" + strPath.Left(j);
+				strPath.TrimLeft(strPath.Left(j));
+			}
+			else
+				strTemp = strTemp + "\\" + strPath;
+			if (!PathFileExists(strTemp))
+				CreateDirectory(strTemp, NULL);
+		}
+	}
+	if (pic_num < 12)
+	{
+		g_dstImage4.copyTo(showimg[pic_num]);
+	}
+	CString picno;
+	picno.Format("%d", pic_num);
+	CString savePath;
+	savePath = strPath + '\\' + picno + ".dat";
+	ofstream fout((LPSTR)(LPCSTR)savePath);
+
+	//	ofstream fout((LPSTR)(LPCSTR)"E:\\IMG\\test2.dat");
+	for (int i = 0; i < PIC_SIZE; i++)
+	{
+		fout << *tmp++ << ' ';
+	}
+
+	fout.close();
+
+	vecPngIDReq.clear();
+	pic_num++;
 		
 }
 
@@ -1321,4 +1286,133 @@ void CCaptureDlg::OnCommMscomm2()
 	}
 	MessageBox(m_msg);
 	
+}
+
+
+void CCaptureDlg::OnBnClickedSaveall()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	std::vector<CString> vecFiles;
+	CString strFoldername = strPath;
+	CString m_cstrFileList = "";
+	CFileFind tempFind;
+	BOOL bFound; //判断是否成功找到文件  
+	bFound = tempFind.FindFile(strFoldername + "\\*.dat");   //修改" "内内容给限定查找文件类型  
+	CString strTmp;   //如果找到的是文件夹 存放文件夹路径  
+	while (bFound)      //遍历所有文件  
+	{
+		bFound = tempFind.FindNextFile(); //第一次执行FindNextFile是选择到第一个文件，以后执行为选择到下一个文件  
+		if (tempFind.IsDots())
+			continue; //如果找到的是返回上层的目录 则结束本次查找  
+		if (tempFind.IsDirectory())   //找到的是文件夹，则遍历该文件夹下的文件  
+		{
+		}
+		else
+		{
+			strTmp = tempFind.GetFileName(); //保存文件名，包括后缀名  
+			// 在此处添加对找到文件的处理  
+			vecFiles.push_back(strPath+"\\"+strTmp);
+		}
+	}
+	tempFind.Close();
+
+	int size = vecFiles.size();
+	if (0 == size)
+	{
+		return;
+	}
+
+	unsigned short sPicData[PIC_SIZE]; // = (unsigned short*)malloc(PIC_SIZE * sizeof(short));
+	for (int i = 0; i<size; ++i)
+	{
+		memset(sPicData, 0, PIC_SIZE*sizeof(short));
+
+		std::ifstream fin(vecFiles[i].GetBuffer());
+		for (int j = 0; j<PIC_SIZE; ++j)
+		{
+			fin >> *(sPicData + j);
+			if (*(sPicData + j) == ' ')
+				j--;
+		}
+
+		m_msg = "发送图片 ";
+		m_msg.Append(vecFiles[i].GetBuffer());
+
+		if (!m_cli.send_png(sScanID, sPicData, PIC_SIZE, vecPngIDReq))
+		{
+			m_msg.Append(" 失败\n原因是：");
+			m_msg.Append(m_cli.get_msg().c_str());
+			MessageBox(m_msg);
+			m_cli.close();
+
+			break;
+		}
+		else
+		{
+			m_msg.Append(" 成功");
+		}
+		MessageBox(m_msg);
+	}
+
+
+	//发送信息
+	//if (0 == vecPngIDReq.size())
+	//{
+	//	m_msg = "图片index列表为空\n请先调用「发送图片」接口";
+	//}
+	//else
+	//{
+	//	std::map<std::string, std::string> mapUserInfo;
+	//	mapUserInfo["id"] = sID;
+	//	mapUserInfo["name"] = "张三";
+	//	mapUserInfo["sex"] = "0";
+	//	mapUserInfo["age"] = "18";
+	//	mapUserInfo["identity"] = "337788";
+	//	mapUserInfo["pic"] = vec_join(vecPngIDReq, ',');
+
+	//	if (!m_cli.send_info(mapUserInfo))
+	//	{
+	//		m_msg = "发送用户信息失败\n";
+	//		m_msg.Append(m_cli.get_msg().c_str());
+	//		m_cli.close();
+	//	//	mb_conn.EnableWindow(TRUE);
+	//	}
+	//	else
+	//	{
+	//		m_msg = "发送用户信息成功";
+	//	}
+	//}
+	//MessageBox(m_msg);
+
+	if (0 == vecPngIDReq.size())
+	{
+		m_msg = "图片index列表为空\n请先调用「发送图片」接口";
+	}
+	else
+	{
+		std::map<std::string, std::string> mapUserInfo;
+		mapUserInfo["scan_id"] = sScanID;
+		//mapUserInfo["card_id"] = sCardID;
+		mapUserInfo["pic"] = vec_join(vecPngIDReq, ',');
+		mapUserInfo["user"] = "test";
+
+		if (!m_cli.send_info(mapUserInfo))
+		{
+			m_msg = "发送用户信息失败\n";
+			m_msg.Append(m_cli.get_msg().c_str());
+			m_cli.close();
+		}
+		else
+		{
+			m_msg = "发送用户信息成功";
+		}
+	}
+	MessageBox(m_msg);
+	
+	CFile    TempFile;
+	
+	for (int i = 0; i < size; i++)
+	{
+		TempFile.Remove(vecFiles[i].GetBuffer());
+	}
 }

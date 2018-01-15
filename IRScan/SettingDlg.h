@@ -58,4 +58,7 @@ public:
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedRadio4();
 	afx_msg void OnSelchangeList1();
+	CEdit m_UPORT;
+	CString m_uport;
+	afx_msg void OnBnClickedRadio5();
 };

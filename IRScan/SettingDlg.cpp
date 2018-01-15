@@ -5,6 +5,8 @@
 #include "IRScan.h"
 #include "SettingDlg.h"
 #include "afxdialogex.h"
+#include <fstream>
+#include <iostream>
 
 extern CString g_port;
 extern CString g_ip;
@@ -12,6 +14,7 @@ extern CString g_uport;
 extern CString g_user;
 extern CString g_passwd;
 
+using namespace std;
 // CSettingDlg 对话框
 
 IMPLEMENT_DYNAMIC(CSettingDlg, CDialogEx)
@@ -21,6 +24,7 @@ CSettingDlg::CSettingDlg(CWnd* pParent /*=NULL*/)
 	, m_ip(_T(""))
 	, m_port(_T(""))
 	, m_list(_T(""))
+	, m_uport(_T(""))
 {
 
 }
@@ -44,6 +48,8 @@ void CSettingDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK1, m_CHECK1);
 	DDX_Control(pDX, IDC_CHECK2, m_CHECK2);
 	DDX_Control(pDX, IDC_CHECK3, m_CHECK3);
+	DDX_Control(pDX, IDC_EDIT3, m_UPORT);
+	DDX_Text(pDX, IDC_EDIT3, m_uport);
 }
 
 
@@ -56,6 +62,7 @@ BEGIN_MESSAGE_MAP(CSettingDlg, CDialogEx)
 	ON_BN_CLICKED(IDOK, &CSettingDlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDC_RADIO4, &CSettingDlg::OnBnClickedRadio4)
 	ON_LBN_SELCHANGE(IDC_LIST1, &CSettingDlg::OnSelchangeList1)
+	ON_BN_CLICKED(IDC_RADIO5, &CSettingDlg::OnBnClickedRadio5)
 END_MESSAGE_MAP()
 
 
@@ -68,19 +75,43 @@ BOOL CSettingDlg::OnInitDialog()
 
 	// TODO:  在此添加额外的初始化
 	m_ip = g_ip;
-	m_port = g_uport;
+	m_port = g_port;
+	m_uport = g_uport;
 	m_user = g_user;
 	m_passwd = g_passwd;
 	m_level = 0;
 	m_opt_level = 0;
 
 	m_PORT.SetWindowText(m_port);
+	m_UPORT.SetWindowText(m_uport);
 
 	DWORD dwIP = ntohl(inet_addr(m_ip));
 	m_IP.SetAddress(dwIP);
 
 	OnBnClickedRadio1();
 	OnBnClickedRadio4();
+
+	m_PORT.GetWindowText(m_port);
+	m_IP.GetWindowText(m_ip);
+	m_msg = "连接IP: " + m_ip;
+	m_msg.Append("\n端口号: ");
+	m_msg.Append(m_port);
+//	MessageBox(m_msg);
+
+	if (m_cli.init(m_ip.GetBuffer(), _ttoi(m_uport)))
+	{
+//	m_msg = "连接成功";
+		/*	m_PORT.EnableWindow(FALSE);
+		m_IP.EnableWindow(FALSE);
+		mb_conn.EnableWindow(FALSE);*/
+	}
+	else
+	{
+		m_msg = "连接失败\n请确认IP或端口号";
+		MessageBox(m_msg);
+	}
+//	MessageBox(m_msg);
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常:  OCX 属性页应返回 FALSE
 }
@@ -89,25 +120,23 @@ BOOL CSettingDlg::OnInitDialog()
 void CSettingDlg::OnBnClickedConn()
 {
 	// TODO:  在此添加控件通知处理程序代码
-	m_PORT.GetWindowText(m_port);
-	m_IP.GetWindowText(m_ip);
-	m_msg = "连接IP: " + m_ip;
-	m_msg.Append("\n端口号: ");
-	m_msg.Append(m_port);
-	MessageBox(m_msg);
+	ofstream fout("config.ini");
 
-	if (m_cli.init(m_ip.GetBuffer(), _ttoi(m_port)))
+	if (fout.fail())
 	{
-		m_msg = "连接成功";
-		m_PORT.EnableWindow(FALSE);
-		m_IP.EnableWindow(FALSE);
-		mb_conn.EnableWindow(FALSE);
+		AfxMessageBox(_T("没有找到配置文件！"));
+		exit(-1);
 	}
-	else
-	{
-		m_msg = "连接失败\n请确认IP或端口号";
-	}
-	MessageBox(m_msg);
+
+	m_PORT.GetWindowText(g_port);
+	m_UPORT.GetWindowText(g_uport);
+	m_IP.GetWindowText(g_ip);
+
+
+	fout << g_ip << ' '<<g_port<<' '<<g_uport;
+
+	fout.close();
+	AfxMessageBox(_T("修改成功！"));
 }
 
 void CSettingDlg::set_permissions()
@@ -192,8 +221,8 @@ int CSettingDlg::get_permissions()
 void CSettingDlg::OnBnClickedListUser()
 {
 	// TODO:  在此添加控件通知处理程序代码
-	m_user = "admin";
-	m_passwd = "test@1234";
+//	m_user = "admin";
+//	m_passwd = "test@1234";
 	if (!m_cli.get_users(m_user, m_passwd, m_userinfo, m_level))
 	{
 		m_msg = "获取用户列表失败\n";
@@ -436,4 +465,12 @@ void CSettingDlg::OnSelchangeList1()
 			m_PASSWD.SetWindowText(_T(""));
 		}
 	}
+}
+
+
+void CSettingDlg::OnBnClickedRadio5()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	((CButton*)GetDlgItem(IDC_RADIO5))->SetCheck(TRUE);
+	m_opt_level = 1;
 }

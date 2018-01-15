@@ -102,4 +102,6 @@ public://数据库连接
 
 	CMscomm1 m_CtrlCard;
 	void OnCommMscomm2();
+	CEdit m_SCANID;
+	afx_msg void OnBnClickedSaveall();
 };

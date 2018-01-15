@@ -105,11 +105,23 @@ BOOL CIRScanDlg::OnInitDialog()
 
 	// TODO: Add extra initialization here
 	CRect tabRect;   // 标签控件客户区的位置和大小   
-
+	
 	m_tab.InsertItem(0, _T("数据采集"));         // 插入第一个标签  
 	m_tab.InsertItem(1, _T("系统设置"));  // 插入第二个标签   
 	capDlg.Create(IDD_CAPTURE, &m_tab);    // 创建第一个标签页   
 	setDlg.Create(IDD_SETTING, &m_tab); // 创建第二个标签页   
+
+	RECT rect;
+
+	// Get size of dialog window.
+	GetClientRect(&rect);
+
+	// Adjust the rectangle to fit the tab control into the  
+	// dialog's client rectangle.
+	m_tab.AdjustRect(FALSE, &rect);
+
+	// Move the tab control to the new position and size.
+	m_tab.MoveWindow(&rect, TRUE);
 
 	m_tab.GetClientRect(&tabRect);    // 获取标签控件客户区Rect   
 	// 调整tabRect，使其覆盖范围适合放置标签页   

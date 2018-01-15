@@ -11,7 +11,7 @@
 #define new DEBUG_NEW
 #endif
 
-
+int g_log_flag = 0;
 // CIRScanApp
 
 BEGIN_MESSAGE_MAP(CIRScanApp, CWinApp)
@@ -52,9 +52,11 @@ BOOL CIRScanApp::InitInstance()
 
 	CWinApp::InitInstance();
 	//加载皮肤
-	InitializeSkin(_T("XPCorona.ssk"));
-	LoadSkin(_T("XPCorona.ssk"));
+	//InitializeSkin(_T("XPCorona.ssk"));
+	//LoadSkin(_T("XPCorona.ssk"));
 	//***********
+	skinppLoadSkin(_T("skin\\Office07.ssk"));//blue.ssk为工程文件夹下的皮肤文件
+	//skinppLoadSkinFromRes();//静态资源加载， 在皮肤.h文件中有函数声明，参数自填
 
 	AfxEnableControlContainer();
 
@@ -74,23 +76,32 @@ BOOL CIRScanApp::InitInstance()
 	// such as the name of your company or organization
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 
-	CLogDlg dlg;
-	m_pMainWnd = &dlg;
-	INT_PTR nResponse = dlg.DoModal();
-	if (nResponse == IDOK)
+	CLogDlg logdlg;
+
+	logdlg.DoModal();
+
+	if (g_log_flag)
 	{
-		// TODO: Place code here to handle when the dialog is
-		//  dismissed with OK
-	}
-	else if (nResponse == IDCANCEL)
-	{
-		// TODO: Place code here to handle when the dialog is
-		//  dismissed with Cancel
-	}
-	else if (nResponse == -1)
-	{
-		TRACE(traceAppMsg, 0, "Warning: dialog creation failed, so application is terminating unexpectedly.\n");
-		TRACE(traceAppMsg, 0, "Warning: if you are using MFC controls on the dialog, you cannot #define _AFX_NO_MFC_CONTROLS_IN_DIALOGS.\n");
+		CIRScanDlg dlg;
+		m_pMainWnd = &dlg;
+
+		INT_PTR nResponse = dlg.DoModal();
+
+		if (nResponse == IDOK)
+		{
+			// TODO:  在此放置处理何时用
+			//  “确定”来关闭对话框的代码
+		}
+		else if (nResponse == IDCANCEL)
+		{
+			// TODO:  在此放置处理何时用
+			//  “取消”来关闭对话框的代码
+		}
+		else if (nResponse == -1)
+		{
+			TRACE(traceAppMsg, 0, "警告: 对话框创建失败，应用程序将意外终止。\n");
+			TRACE(traceAppMsg, 0, "警告: 如果您在对话框上使用 MFC 控件，则无法 #define _AFX_NO_MFC_CONTROLS_IN_DIALOGS。\n");
+		}
 	}
 
 	// Delete the shell manager created above.

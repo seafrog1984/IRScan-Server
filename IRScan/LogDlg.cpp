@@ -9,6 +9,7 @@
 
 extern CString g_user;
 extern CString g_passwd;
+extern int g_log_flag;
 
 // CLogDlg 对话框
 
@@ -48,18 +49,16 @@ void CLogDlg::OnBnClickedOk()
 {
 	// TODO:  在此添加控件通知处理程序代码
 
-	//	m_user = "test";
 	m_USER.GetWindowText(m_user);
 	g_user = m_user;
-	//	m_passwd = "test@1234";
 	m_PASSWD.GetWindowText(m_passwd);
 	g_passwd = m_passwd;
 	//	m_PORT.GetWindowText(m_port);
 	//	m_IP.GetWindowText(m_ip);
-	m_msg = "连接IP: " + m_ip;
+	/*m_msg = "连接IP: " + m_ip;
 	m_msg.Append("\n端口号: ");
 	m_msg.Append(m_port);
-	MessageBox(m_msg);
+	MessageBox(m_msg);*/
 
 	if (m_cli.init(m_ip.GetBuffer(), _ttoi(m_port)))
 	{
@@ -92,7 +91,7 @@ void CLogDlg::OnBnClickedOk()
 	}
 	else
 	{
-	//	m_msg = "获取授权码成功\n";
+		m_msg = "获取授权码成功\n";
 		CString sAuth = m_cli.get_auth().c_str();
 		CString sRep1 = sAuth.Mid(8, 16);
 		CString sRep2('*', sRep1.GetLength());
@@ -123,9 +122,7 @@ void CLogDlg::OnBnClickedOk()
 	//	m_msg.Append("图像扫描");
 		if (pt.p1||pt.p3)
 		{
-			CIRScanDlg  dlg;
-			//	m_pMainWnd = &dlg;
-			INT_PTR nResponse = dlg.DoModal();
+			g_log_flag = 1;
 
 		}
 		else
@@ -137,9 +134,6 @@ void CLogDlg::OnBnClickedOk()
 	}
 
 //	
-
-	
-
 	CDialogEx::OnOK();
 }
 
@@ -153,7 +147,10 @@ BOOL CLogDlg::OnInitDialog()
 	//m_ip = "10.70.77.81";
 	//m_ip="192.168.31.157";
 	m_ip = "119.29.233.186";
-
+	m_user = "test";
+	m_passwd = "test@1234";
+	m_USER.SetWindowText(m_user);
+	m_PASSWD.SetWindowText(m_passwd);
 	iTestFlag = 1;
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常:  OCX 属性页应返回 FALSE
